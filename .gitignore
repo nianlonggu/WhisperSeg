@@ -1,4 +1,5 @@
 model/
 result/
 PrepareDataset.ipynb
+README.ipynb
 __pycache__/
