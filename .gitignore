@@ -1,0 +1,4 @@
+model/
+result/
+PrepareDataset.ipynb
+__pycache__/
