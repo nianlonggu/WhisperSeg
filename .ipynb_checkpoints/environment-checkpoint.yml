@@ -282,3 +282,4 @@ dependencies:
       - yarl==1.8.2
       - ypy-websocket==0.8.2
       - zipp==3.14.0
+      - ctranslate2==3.10.1

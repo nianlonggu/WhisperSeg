@@ -36,7 +36,7 @@ import numpy as np
 ```python
 # initialize the segmenter
 segmenter = Segmenter(  model_path = "nianlong/vocal-segment-zebra-finch-whisper-large", 
-                        device = "cuda:0")
+                        device = "cuda")
 ```
 
 
@@ -318,7 +318,7 @@ import pandas as pd
 import numpy as np
 
 segmenter = Segmenter(  model_path = "model/DAS_zebra_finch/checkpoint-1000", 
-                        device = "cuda:0")
+                        device = "cuda")
 
 audio_file_name = "data/DAS_zebra_finch/test/birdname_130519_113316.31.wav"
 human_annotation_file_name = "data/DAS_zebra_finch/test/birdname_130519_113316.31.csv"
@@ -344,6 +344,236 @@ segmenter.visualize( audio = audio, prediction = prediction, label = label, audi
 
 
 Therefore, WhisperSeg does perform better after finetuning!
+
+# Speed Up Inference with ctranslate2 - SegmenterFast
+
+The environment.yml has been updated due to the adding of the ctranslate2 package. 
+
+Running the code below does not rely on the previous codes in this notebook. One can restart the kernel before run the following code, to release some GPU usage.
+
+## convert the huggingface Whisper model to the CTranslate2 model, and store the configuration files of the tokenizer and feature-extractor
+
+Note: The following cell only needs to be run once.
+
+
+```python
+from huggingface_hub import hf_hub_download
+from transformers import WhisperForConditionalGeneration, WhisperFeatureExtractor, WhisperTokenizer
+import os
+## If you have trained model on new dataset, replace this hf_model_path's value with the path to the newly saved checkpoint
+hf_model_path = "nianlong/vocal-segment-zebra-finch-whisper-large"
+## The path to the folder where the converted ctranslate2 model will be saved. 
+## In the meantime, the configuration files for Tokenizer and FeatureExtractors will also be copied to this folder
+ct2_model_path = "model/vocal-segment-zebra-finch-whisper-large-ct2"
+
+assert not os.path.exists(ct2_model_path)
+
+os.system( "ct2-transformers-converter --model %s --output_dir %s"%( hf_model_path, ct2_model_path ) )
+## copy the configuration file of the original huggingface model, because it contains some useful hyperparameters
+hf_hub_download(repo_id=hf_model_path, filename="config.json", local_dir = ct2_model_path+"/hf_model/")
+WhisperFeatureExtractor.from_pretrained( hf_model_path ).save_pretrained( ct2_model_path+"/hf_model/" )
+WhisperTokenizer.from_pretrained(hf_model_path, language = "english" ).save_pretrained( ct2_model_path+"/hf_model/" )
+```
+
+
+
+
+    ('model/vocal-segment-zebra-finch-whisper-large-ct2/hf_model/tokenizer_config.json',
+     'model/vocal-segment-zebra-finch-whisper-large-ct2/hf_model/special_tokens_map.json',
+     'model/vocal-segment-zebra-finch-whisper-large-ct2/hf_model/vocab.json',
+     'model/vocal-segment-zebra-finch-whisper-large-ct2/hf_model/merges.txt',
+     'model/vocal-segment-zebra-finch-whisper-large-ct2/hf_model/normalizer.json',
+     'model/vocal-segment-zebra-finch-whisper-large-ct2/hf_model/added_tokens.json')
+
+
+
+## Use the CTranslate2 Converted Model
+
+
+```python
+from model import SegmenterFast
+import librosa
+import pandas as pd
+import numpy as np
+import time
+import os
+from tqdm import tqdm
+```
+
+
+```python
+segmenter_fast = SegmenterFast( "model/vocal-segment-zebra-finch-whisper-large-ct2", device="cuda" )
+```
+
+
+```python
+audio_file_name = "data/R3406_035/test/R3406_40911.54676404_1_3_15_11_16.wav"
+human_annotation_file_name = "data/R3406_035/test/R3406_40911.54676404_1_3_15_11_16.csv"
+audio, _ = librosa.load( audio_file_name, sr = 16000 )
+label_df = pd.read_csv( human_annotation_file_name )
+label = {
+    "onset":np.array(label_df["onset"]),
+    "offset":np.array(label_df["offset"])
+}
+
+tic = time.time()
+prediction = segmenter_fast.segment( audio )
+tac = time.time()
+
+segmenter_fast.visualize( audio = audio, prediction = prediction, label = label, audio_file_name = audio_file_name)
+
+print("Audio Length: %f s"%(len(audio)/16000))
+print("Segmentation Time: %f s"%(tac - tic))
+```
+
+
+    interactive(children=(FloatSlider(value=1.0, description='offset', max=2.0530625000000002), Output()), _dom_cl…
+
+
+    Audio Length: 7.053063 s
+    Segmentation Time: 1.869219 s
+
+
+
+```python
+audio_file_name = "data/R3277/R3277_40905.13765404_12_28_3_49_25.wav"
+audio, _ = librosa.load( audio_file_name, sr = 16000 )
+
+tic = time.time()
+prediction = segmenter_fast.segment( audio )
+tac = time.time()
+
+segmenter_fast.visualize( audio = audio, prediction = prediction, audio_file_name = audio_file_name)
+
+print("Audio Length: %f s"%(len(audio)/16000))
+print("Segmentation Time: %f s"%(tac - tic))
+```
+
+
+    interactive(children=(FloatSlider(value=0.6000000000000001, description='offset', max=1.3739375000000003), Out…
+
+
+    Audio Length: 6.373938 s
+    Segmentation Time: 0.245195 s
+
+
+
+```python
+audio_file_name = "data/R3277/R3277_40905.38807_12_28_10_46_47.wav"
+audio, _ = librosa.load( audio_file_name, sr = 16000 )
+
+tic = time.time()
+prediction = segmenter_fast.segment( audio )
+tac = time.time()
+
+segmenter_fast.visualize( audio = audio, prediction = prediction, audio_file_name = audio_file_name)
+
+print("Audio Length: %f s"%(len(audio)/16000))
+print("Segmentation Time: %f s"%(tac - tic))
+```
+
+
+    interactive(children=(FloatSlider(value=13.600000000000001, description='offset', max=27.2641875), Output()), …
+
+
+    Audio Length: 32.264187 s
+    Segmentation Time: 1.722064 s
+
+
+
+```python
+audio_file_name = "data/R3277/R3277_40905.406363_12_28_11_17_16.wav"
+audio, _ = librosa.load( audio_file_name, sr = 16000 )
+
+tic = time.time()
+prediction = segmenter_fast.segment( audio )
+tac = time.time()
+
+segmenter_fast.visualize( audio = audio, prediction = prediction, audio_file_name = audio_file_name)
+
+print("Audio Length: %f s"%(len(audio)/16000))
+print("Segmentation Time: %f s"%(tac - tic))
+```
+
+
+    interactive(children=(FloatSlider(value=0.2, description='offset', max=0.4276875000000002), Output()), _dom_cl…
+
+
+    Audio Length: 5.427688 s
+    Segmentation Time: 0.357237 s
+
+
+## Test the Speed of SegmenterFast
+
+Here we use the SegmenterFast to segment all audios in the folder "data/DAS_zebra_finch/train/", and record the time spent.
+
+
+```python
+audio_list = [ librosa.load("data/DAS_zebra_finch/train/"+fname, sr = 16000)[0] for fname in os.listdir("data/DAS_zebra_finch/train/") if fname.endswith(".wav") ]
+
+num_of_audio_files = len(audio_list)
+total_audio_length = sum([ len(audio)/16000  for audio in audio_list ])
+
+print("Total number of audio (.wav) files:", num_of_audio_files)
+print("Total length of audio files: %f s"%(total_audio_length))
+```
+
+    Total number of audio (.wav) files: 14
+    Total length of audio files: 175.500438 s
+
+
+
+```python
+tic = time.time()
+
+for audio in tqdm(audio_list):
+    segmenter_fast.segment(audio)
+    
+tac = time.time()
+print("Total segmentation time: %f s for segmenting %.2f minutes audio"%(tac - tic, total_audio_length/60))
+print("Average segmentation speed: %f s of audio segmented per second"%( total_audio_length / (tac - tic) ))
+```
+
+    100%|████████████████████████████████████████████████████████| 14/14 [00:19<00:00,  1.40s/it]
+
+    Total segmentation time: 19.593630 s for segmenting 2.93 minutes audio
+    Average segmentation speed: 8.957015 s of audio segmented per second
+
+
+    
+
+
+Note that the default num_trials is 3, which means one audio file will be segmented three times, each time with a slightly different offset. This helps to improve the segmentation accuracy, but it will slow down the segmentation process.
+
+If num_trials is set to 1, the segmentation speed will be improved.
+
+
+```python
+tic = time.time()
+
+for audio in tqdm(audio_list):
+    segmenter_fast.segment(audio, num_trials= 1)
+    
+tac = time.time()
+print("Total segmentation time: %f s for segmenting %.2f minutes audio"%(tac - tic, total_audio_length/60))
+print("Average segmentation speed: %f s of audio segmented per second"%( total_audio_length / (tac - tic) ))
+```
+
+    100%|████████████████████████████████████████████████████████| 14/14 [00:11<00:00,  1.23it/s]
+
+    Total segmentation time: 11.357352 s for segmenting 2.93 minutes audio
+    Average segmentation speed: 15.452585 s of audio segmented per second
+
+
+    
+
+
+As a comparison, the speed of faster-whisper is 54s for transcribing 13 minutes of audio: https://github.com/guillaumekln/faster-whisper#large-v2-model-on-gpu 
+
+## GPU Usage of SegmenterFast
+
+GPU usage when idle: 3.8 GB <br>
+GPU usage when segmenting (with a internal batch size 16):  up to 6 GB
 
 
 ```python

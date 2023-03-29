@@ -147,7 +147,7 @@ if __name__ == "__main__":
     optimizer = AdamW(optimizer_grouped_parameters, lr = args.learning_rate )
         
     model = nn.DataParallel( model, args.gpu_list )
-    segmenter = Segmenter( model = model, feature_extractor = feature_extractor, tokenizer = tokenizer )
+    segmenter = WhisperSegmenter( model = model, feature_extractor = feature_extractor, tokenizer = tokenizer )
     
     scaler = torch.cuda.amp.GradScaler()
         
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     if best_checkpoint_batch_number is not None:
         print("The best checkpoint on validation set is: %s," % ( args.model_folder+"/checkpoint-%d"%(best_checkpoint_batch_number) ) )
         print("Reporting test results ...")
-        segmenter = Segmenter( args.model_folder + "/checkpoint-%d"%( best_checkpoint_batch_number ), device )
+        segmenter = WhisperSegmenter( args.model_folder + "/checkpoint-%d"%( best_checkpoint_batch_number ), device )
         precision, recall, f1, TP, P_pred, P_true = validate( audio_list_test, label_list_test, segmenter, 
                                                               args.max_length, args.sr, args.tolerance, args.num_trials, 
                                                               args.timestamp_precision )
