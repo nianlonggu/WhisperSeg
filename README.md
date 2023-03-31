@@ -432,7 +432,7 @@ print("Segmentation Time: %f s"%(tac - tic))
 
 
     Audio Length: 7.053063 s
-    Segmentation Time: 3.053034 s
+    Segmentation Time: 0.823457 s
 
 
 
@@ -455,7 +455,7 @@ print("Segmentation Time: %f s"%(tac - tic))
 
 
     Audio Length: 6.373938 s
-    Segmentation Time: 0.221841 s
+    Segmentation Time: 0.278107 s
 
 
 
@@ -478,7 +478,7 @@ print("Segmentation Time: %f s"%(tac - tic))
 
 
     Audio Length: 32.264187 s
-    Segmentation Time: 1.439877 s
+    Segmentation Time: 1.740336 s
 
 
 
@@ -501,7 +501,7 @@ print("Segmentation Time: %f s"%(tac - tic))
 
 
     Audio Length: 5.427688 s
-    Segmentation Time: 0.357921 s
+    Segmentation Time: 0.360325 s
 
 
 ## Test the Speed of WhisperSegmenterFast
@@ -544,13 +544,27 @@ print("Average segmentation speed: %f s of audio segmented per second"%( total_a
     
 
 
+
+```python
+
+```
+
+
+```python
+
+```
+
 Note that the default num_trials is 3, which means one audio file will be segmented three times, each time with a slightly different offset. This helps to improve the segmentation accuracy, but it will slow down the segmentation process. 
 
 If num_trials is set to 1, the segmentation speed will be improved. However, the segmentation accuracy will be slightly impacted. 
 
 ## Speed Comparison between WhisperSegmenterFast and faster-whisper (https://github.com/guillaumekln/faster-whisper)
 
-### speed of faster-whisper
+### Performance on GPU
+
+Tested on NVIDIA A100 GPU 40 GB
+
+#### speed of faster-whisper
 
 
 ```python
@@ -605,7 +619,7 @@ print("Segmentation time: %f s for segmenting %.2f minutes audio"%(tac - tic, to
 
 The file data/speed_test/test_audio.mp3 is the same file used in the benchmark in https://github.com/guillaumekln/faster-whisper#benchmark, where the authors reported that it took **54 s** to segment this 13 min audio.
 
-### Speed of WhisperSegmenterFast
+#### Speed of WhisperSegmenterFast
 
 For a fair comparison, we let WhisperSegmenterFast segment bird song audio that is also 13 min long. 
 
@@ -638,13 +652,13 @@ print("Total length of audio: %.2f min"%(total_audio_length/60))
 
 tic = time.time()
 audio, _ = librosa.load(audio_name, sr = 16000)
-prediction = segmenter_fast.segment(audio, num_trials= 1)
+prediction = segmenter_fast.segment(audio, num_trials= 3)
 tac = time.time()
 print("Segmentation time: %f s for segmenting %.2f minutes audio"%(tac - tic, total_audio_length/60))
 ```
 
     Total length of audio: 13.32 min
-    Segmentation time: 12.028466 s for segmenting 13.32 minutes audio
+    Segmentation time: 39.355548 s for segmenting 13.32 minutes audio
 
 
 The segmentation looks reasonable, as shown by visualization.
@@ -667,7 +681,148 @@ segmenter_fast.visualize(audio = audio, prediction=prediction)
 
 **Conclusion: The speed between both WhisperSegmenterFast and faster-whipser is comparable.**
 
-## GPU Usage of faster-whisperFast
+### Performance on CPU
+
+Tested on AMD EPYC 7H12 64-Core Processor
+
+#### speed of faster-whisper -- the small whisper model
+
+
+```python
+## This code comes from the github repo of faster-whisper: 
+## https://github.com/guillaumekln/faster-whisper#transcription
+import librosa
+import pandas as pd
+import numpy as np
+import time
+import os
+from tqdm import tqdm
+
+from faster_whisper import WhisperModel
+model_size = "small"
+faster_whisper_model = WhisperModel(model_size, device="cpu", compute_type="float32")
+
+audio_name = "data/speed_test/test_audio.mp3"
+audio, _ = librosa.load(audio_name, sr = 16000)
+total_audio_length = len(audio)/16000
+print("Total length of audio: %.2f min"%(total_audio_length/60))
+
+tic = time.time()
+
+segments, info  = faster_whisper_model.transcribe(audio_name, beam_size=5)
+"""
+    If you comment out the following two lines, you will witness a 8x speedup. 
+    However, this speed is not useful, beacause the segments above is a generator. To get the real content from it,
+    one must loop through the generator, and this loop turns out to be slow, but necessary. 
+    Therefore, the following two lines should be counted into the time spent by faster-whisper
+"""
+res = []
+for segment in segments:
+    res.append((segment.start, segment.end, segment.text))
+    
+tac = time.time()
+print("Segmentation time: %.2f min for segmenting %.2f minutes audio"%((tac - tic)/60, total_audio_length/60))
+```
+
+
+    Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]
+
+
+    Estimating duration from bitrate, this may be inaccurate
+
+
+    Total length of audio: 13.32 min
+    Segmentation time: 2.84 min for segmenting 13.32 minutes audio
+
+
+In the benchmark in https://github.com/guillaumekln/faster-whisper#benchmark, where the authors reported that it took **2 min 44 s** to segment this 13 min audio with **small whisper on CPU**.
+
+#### speed of faster-whisper -- the large whisper model
+
+
+```python
+## This code comes from the github repo of faster-whisper: 
+## https://github.com/guillaumekln/faster-whisper#transcription
+import librosa
+import pandas as pd
+import numpy as np
+import time
+import os
+from tqdm import tqdm
+
+from faster_whisper import WhisperModel
+model_size = "large-v2"
+faster_whisper_model = WhisperModel(model_size, device="cpu", compute_type="float32")
+
+audio_name = "data/speed_test/test_audio.mp3"
+audio, _ = librosa.load(audio_name, sr = 16000)
+total_audio_length = len(audio)/16000
+print("Total length of audio: %.2f min"%(total_audio_length/60))
+
+tic = time.time()
+
+segments, info  = faster_whisper_model.transcribe(audio_name, beam_size=5)
+"""
+    If you comment out the following two lines, you will witness a 8x speedup. 
+    However, this speed is not useful, beacause the segments above is a generator. To get the real content from it,
+    one must loop through the generator, and this loop turns out to be slow, but necessary. 
+    Therefore, the following two lines should be counted into the time spent by faster-whisper
+"""
+res = []
+for segment in segments:
+    res.append((segment.start, segment.end, segment.text))
+    
+tac = time.time()
+print("Segmentation time: %.2f min for segmenting %.2f minutes audio"%((tac - tic)/60, total_audio_length/60))
+```
+
+
+    Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]
+
+
+    Estimating duration from bitrate, this may be inaccurate
+
+
+    Total length of audio: 13.32 min
+    Segmentation time: 14.41 min for segmenting 13.32 minutes audio
+
+
+#### speed of WhisperSegmenterFast
+
+
+```python
+from model import WhisperSegmenterFast
+import librosa
+import pandas as pd
+import numpy as np
+import time
+import os
+from tqdm import tqdm
+
+segmenter_fast = WhisperSegmenterFast( "model/vocal-segment-zebra-finch-whisper-large-ct2", device="cpu", compute_type="float32" )
+
+audio_name = "data/speed_test/test_birdsong_audio.wav"
+audio, _ = librosa.load(audio_name, sr = 16000)
+total_audio_length = len(audio)/16000
+print("Total length of audio: %.2f min"%(total_audio_length/60))
+
+tic = time.time()
+audio, _ = librosa.load(audio_name, sr = 16000)
+prediction = segmenter_fast.segment(audio, num_trials= 1)
+tac = time.time()
+print("Segmentation time: %f s for segmenting %.2f minutes audio"%(tac - tic, total_audio_length/60))
+```
+
+    Total length of audio: 13.32 min
+    Segmentation time: 580.828187 s for segmenting 13.32 minutes audio
+
+
+
+```python
+
+```
+
+## GPU Usage of WhisperSegmenterFast
 
 GPU usage when idle: 3.8 GB <br>
 GPU usage when segmenting (with a internal batch size 16):  up to 6 GB
