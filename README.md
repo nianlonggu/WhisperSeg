@@ -91,7 +91,7 @@ segmenter.visualize( audio = audio, prediction = prediction, audio_file_name = a
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image1.png)
 
 If we know the ground-truth label, we can also plot both the predicted label and the ground-truth label to visualize the prediction error.
 
@@ -139,7 +139,7 @@ segmenter.visualize( audio = audio, prediction = prediction, label = label, audi
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image2.png)
 
 # Finetune WhisperSeg
 
@@ -168,7 +168,7 @@ segmenter.visualize( audio = audio, prediction = prediction, label = label, audi
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image3.png)
 
 There are quite a lot of False Positives! That's why we need to finetune WhisperSeg.
 
@@ -342,7 +342,7 @@ segmenter.visualize( audio = audio, prediction = prediction, label = label, audi
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image5.png)
 
 Therefore, WhisperSeg does perform better after finetuning!
 
@@ -432,8 +432,9 @@ print("Segmentation Time: %f s"%(tac - tic))
 
 
     Audio Length: 7.053063 s
-    Segmentation Time: 1.866981 s
+    Segmentation Time: 0.794143 s
 
+![](images/image4.png)
 
 
 ```python
