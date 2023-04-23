@@ -35,7 +35,7 @@ import numpy as np
 
 ```python
 # initialize the segmenter
-segmenter = WhisperSegmenter(  model_path = "nianlong/vocal-segment-zebra-finch-whisper-large", 
+segmenter = WhisperSegmenter(  model_path = "nccratliri/vocal-segment-zebra-finch-whisper-large", 
                         device = "cuda")
 ```
 
@@ -206,7 +206,7 @@ We do not create validation set, and use all the training set to train the model
 
 
 ```python
-!python train.py -initial_model_path nianlong/vocal-segment-zebra-finch-whisper-large -model_folder model/DAS_zebra_finch -result_folder result/DAS_zebra_finch -train_dataset_folder data/DAS_zebra_finch/train -test_dataset_folder data/DAS_zebra_finch/test -warmup_steps 200 -save_every 1000 -max_num_iterations 1000 -batch_size 4
+!python train.py -initial_model_path nccratliri/vocal-segment-zebra-finch-whisper-large -model_folder model/DAS_zebra_finch -result_folder result/DAS_zebra_finch -train_dataset_folder data/DAS_zebra_finch/train -test_dataset_folder data/DAS_zebra_finch/test -warmup_steps 200 -save_every 1000 -max_num_iterations 1000 -batch_size 4
 
 ```
 
@@ -362,7 +362,7 @@ from huggingface_hub import hf_hub_download
 from transformers import WhisperForConditionalGeneration, WhisperFeatureExtractor, WhisperTokenizer
 import os
 ## If you have trained model on new dataset, replace this hf_model_path's value with the path to the newly saved checkpoint
-hf_model_path = "nianlong/vocal-segment-zebra-finch-whisper-large"
+hf_model_path = "nccratliri/vocal-segment-zebra-finch-whisper-large"
 ## The path to the folder where the converted ctranslate2 model will be saved. 
 ## In the meantime, the configuration files for Tokenizer and FeatureExtractors will also be copied to this folder
 ct2_model_path = "model/vocal-segment-zebra-finch-whisper-large-ct2"
