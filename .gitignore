@@ -2,3 +2,7 @@ model/
 result/
 __pycache__/
 .ipynb_checkpoints/
+data/raw/
+data/dataset/zebseg/
+data/dataset/Canary/
+archives/
