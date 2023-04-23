@@ -41,46 +41,6 @@ segmenter = WhisperSegmenter( model_path = "nccratliri/whisperseg-zebra-finch",
 ```
 
 
-    Downloading (…)lve/main/config.json:   0%|          | 0.00/2.13k [00:00<?, ?B/s]
-
-
-
-    Downloading pytorch_model.bin:   0%|          | 0.00/6.17G [00:00<?, ?B/s]
-
-
-
-    Downloading (…)neration_config.json:   0%|          | 0.00/1.20k [00:00<?, ?B/s]
-
-
-
-    Downloading (…)rocessor_config.json:   0%|          | 0.00/185k [00:00<?, ?B/s]
-
-
-
-    Downloading (…)okenizer_config.json:   0%|          | 0.00/876 [00:00<?, ?B/s]
-
-
-
-    Downloading (…)olve/main/vocab.json:   0%|          | 0.00/1.04M [00:00<?, ?B/s]
-
-
-
-    Downloading (…)olve/main/merges.txt:   0%|          | 0.00/494k [00:00<?, ?B/s]
-
-
-
-    Downloading (…)main/normalizer.json:   0%|          | 0.00/52.7k [00:00<?, ?B/s]
-
-
-
-    Downloading (…)in/added_tokens.json:   0%|          | 0.00/35.1k [00:00<?, ?B/s]
-
-
-
-    Downloading (…)cial_tokens_map.json:   0%|          | 0.00/2.08k [00:00<?, ?B/s]
-
-
-
 ```python
 # load an audio file, and resample the audio to the sampling rate 16000 Hz 
 audio_file_name = "data/dataset/zebra_finch_test/R3406_40911.54676404_1_3_15_11_16.wav"
@@ -95,34 +55,10 @@ prediction = segmenter.segment( audio )
 
 
 ```python
-prediction
+print(prediction)
 ```
 
-
-
-
-    {'onset': array([1.47 , 1.83 , 1.93 , 2.055, 2.17 , 2.26 , 2.425, 2.715, 2.915,
-            3.055, 3.135, 3.28 , 3.625, 3.815, 4.1  , 4.2  , 4.97 ]),
-     'offset': array([1.58 , 1.885, 2.035, 2.105, 2.24 , 2.37 , 2.58 , 2.84 , 3.03 ,
-            3.125, 3.24 , 3.43 , 3.67 , 3.905, 4.15 , 4.39 , 5.07 ]),
-     'cluster': ['0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0']}
-
+    {'onset': [1.47, 1.83, 1.9300000000000002, 2.055, 2.17, 2.26, 2.425, 2.715, 2.915, 3.055, 3.135, 3.2800000000000002, 3.625, 3.815, 4.1, 4.2, 4.97], 'offset': [1.58, 1.885, 2.035, 2.105, 2.24, 2.37, 2.58, 2.84, 3.03, 3.125, 3.24, 3.43, 3.67, 3.9050000000000002, 4.15, 4.39, 5.07], 'cluster': ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']}
 
 
 The key "cluster" refers to the type or name of each segments. This key-value pair can be ignored if we only needs to onset and offset.
@@ -151,7 +87,7 @@ segmenter.visualize(audio = audio, prediction = prediction )
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image1.png)
 
 If we know the ground-truth label, we can also plot both the predicted label and the ground-truth label to visualize the prediction error.
 
@@ -192,7 +128,7 @@ segmenter.visualize( audio = audio, prediction = prediction, label = label, audi
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image2.png)
 
 # Finetune WhisperSeg
 
@@ -229,7 +165,7 @@ segmenter.visualize( audio = audio, prediction = prediction, label = label, audi
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image3.png)
 
 So the pretrained model cannot be directly applied to the DAS zebra finch dataset. Therefore we need to finetune it further.
 
@@ -387,7 +323,7 @@ segmenter.visualize( audio = audio, prediction = prediction, label = label, audi
 
     <function ipywidgets.widgets.interaction._InteractFactory.__call__.<locals>.<lambda>(*args, **kwargs)>
 
-
+![](images/image4.png)
 
 Therefore, WhisperSeg does perform better after finetuning!
 
@@ -487,8 +423,9 @@ print("Segmentation Time: %f s"%(tac - tic))
 
 
     Audio Length: 7.053063 s
-    Segmentation Time: 2.926064 s
+    Segmentation Time: 2.888752 s
 
+![](images/image5.png)
 
 # Run WhisperSeg as a Web Service
 
