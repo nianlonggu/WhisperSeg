@@ -518,3 +518,9 @@ disp(prediction)
 ```python
 
 ```
+
+
+## References
+
+https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html?highlight=max_length
+https://opennmt.net/CTranslate2/guides/transformers.html#whisper
