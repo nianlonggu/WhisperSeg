@@ -156,7 +156,14 @@ class SegmenterBase:
                 selected_prediction_with_noise_seg.append([ current_time, onset, self.noise_cluster ])
             if onset < offset:
                 
-                cluster_counter[cluster] = cluster_counter.get(cluster, 0) + 1
+                #cluster_counter[cluster] = cluster_counter.get(cluster, 0) + 1
+                """
+                This is the trick that is used to create a separate sub-name for two same adjacent clusters. 
+                For example, the processed cluster name will look like "seg_cluster_1_count_1 | seg_cluster_1_count_2". 
+                This set up was originalally used for the case where two adjacent segments of the same type are very close (and even 0 gap),
+                but it sometimes bring unexpected behavior. Disable is for now (by setting the subname always to 0).
+                """
+                cluster_counter[cluster] = 0
                 selected_prediction_with_noise_seg.append([ onset, offset, cluster + self.cluster_counter_sufix%(cluster_counter[cluster]) ])
                 current_time = offset
             
@@ -455,7 +462,7 @@ class WhisperSegmenter(SegmenterBase):
     @torch.no_grad()
     def segment( self, audio, num_trials = 3, min_segment_length = 0.02,
                        voting_time_step = 1.0, voting_precision = 0.001, 
-                       batch_size = 16, max_length = 400
+                       batch_size = 16, max_length = 448
                ):
         ## voting_time_step is used to during voting for the final prediction based on multiple trials. 
         ## set it to a smaller value if the segments are very dense with small gaps
@@ -613,7 +620,7 @@ class WhisperSegmenterFast(SegmenterBase):
     @torch.no_grad()
     def segment( self, audio, num_trials = 3, min_segment_length = 0.02,
                        voting_time_step = 1.0, voting_precision = 0.001, 
-                       batch_size = 16, max_length = 400
+                       batch_size = 16, max_length = 448
                ):
         
 
@@ -669,7 +676,7 @@ class WhisperSegmenterFast(SegmenterBase):
                 [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"]
             )
             ## the ctranslate converted model typically requires a larger max length than the one required by the original huggingface model, so we set max_length to a large value.
-            model_output = self.model.generate(features, [ prompt for _ in range(actual_batch_size) ], max_length = max( 1024, 2*max_length ) )
+            model_output = self.model.generate(features, [ prompt for _ in range(actual_batch_size) ], max_length = max_length )
             generated_text_batch = []
             for item in model_output:
                 try:
