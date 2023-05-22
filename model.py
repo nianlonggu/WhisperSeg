@@ -548,6 +548,15 @@ class WhisperSegmenter(SegmenterBase):
             merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
             merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] > 0 ]
         
+        if num_trials == 1:
+            pred_onsets, pred_offsets, pred_clusters = [], [], []
+            for item in merged_on_offset_list_of_trial[0]:
+                pred_onsets.append(item[0])
+                pred_offsets.append(item[1])
+                pred_clusters.append(item[2])
+            return {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) }
+                
+        
         ## obtain the final prediction by voting
         ## NOTE: This voting is done piece by piece
         
@@ -720,7 +729,17 @@ class WhisperSegmenterFast(SegmenterBase):
         for trial_id in merged_on_offset_list_of_trial:
             merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
             merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] > 0 ]
-        
+
+            
+        if num_trials == 1:
+            pred_onsets, pred_offsets, pred_clusters = [], [], []
+            for item in merged_on_offset_list_of_trial[0]:
+                pred_onsets.append(item[0])
+                pred_offsets.append(item[1])
+                pred_clusters.append(item[2])
+            return {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) }
+            
+            
         ## obtain the final prediction by voting
         ## NOTE: This voting is done piece by piece
         
