@@ -1,7 +1,7 @@
 # TODO
 
 * apply filtering based on minimum duration even when num_trials is 1
-
+* do not run test when the test_folder is not provided
 
 
 # Set up environment
