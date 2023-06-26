@@ -1,3 +1,9 @@
+# TODO
+
+* apply filtering based on minimum duration even when num_trials is 1
+
+
+
 # Set up environment
 
 ## Option 1: Set up environment in your local computer
