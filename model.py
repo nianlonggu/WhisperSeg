@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
 import matplotlib.cm as cm
-
+from sklearn.metrics import pairwise_distances
+from sklearn.cluster import DBSCAN
 
 from PIL import Image
 
@@ -90,8 +91,6 @@ def save_model( model, feature_extractor, tokenizer, current_batch, model_folder
         os.system("rm -r %s"%(ckpt_name) )
         
 
-        
-
 class SegmenterBase:
     def __init__( self,  ):
         self.segment_matcher = re.compile("<\|([0-9]+\.[0-9]+)\|>(\d+?)<\|([0-9]+\.[0-9]+)\|>")
@@ -134,97 +133,59 @@ class SegmenterBase:
                 continue
         return segment_list
     
-    def select_prediction_given_time_range( self, prediction, start_time, end_time):
-        
-        selected_prediction = []
-        for onset, offset, cluster in prediction:
-            if onset < end_time and offset > start_time:
-                selected_prediction.append( [ onset, offset, cluster ] )
-        if len(selected_prediction) > 0 and selected_prediction[-1][1] > end_time:
-            is_cutoff = True
-        else:
-            is_cutoff = False
-        
-        cluster_counter = {}
-        
-        selected_prediction_with_noise_seg = []
-        current_time = start_time
-        for onset, offset, cluster in selected_prediction:
-            onset = max( onset, current_time )
-            offset = min( offset, end_time )
-            if onset > current_time:
-                selected_prediction_with_noise_seg.append([ current_time, onset, self.noise_cluster ])
-            if onset < offset:
-                
-                #cluster_counter[cluster] = cluster_counter.get(cluster, 0) + 1
-                """
-                This is the trick that is used to create a separate sub-name for two same adjacent clusters. 
-                For example, the processed cluster name will look like "seg_cluster_1_count_1 | seg_cluster_1_count_2". 
-                This set up was originalally used for the case where two adjacent segments of the same type are very close (and even 0 gap),
-                but it sometimes bring unexpected behavior. Disable is for now (by setting the subname always to 0).
-                """
-                cluster_counter[cluster] = 0
-                selected_prediction_with_noise_seg.append([ onset, offset, cluster + self.cluster_counter_sufix%(cluster_counter[cluster]) ])
-                current_time = offset
-            
-            if offset >= end_time:
-                break
-        if current_time < end_time:
-            selected_prediction_with_noise_seg.append([ current_time, end_time, self.noise_cluster ])
-        
-        return selected_prediction_with_noise_seg, is_cutoff
+    ### multi-trial consolidation 
+    def custom_distance(self, segment1, segment2):
+        onset_diff = abs(segment1[0] - segment2[0])
+        offset_diff = abs(segment1[1] - segment2[1])
+        return (onset_diff + offset_diff) / 2
 
-    
-    def vote_predictions(self, selected_prediction_list, voting_precision ):
-        assert len(selected_prediction_list) > 0
-        start_time = selected_prediction_list[0][0][0]
-        end_time = selected_prediction_list[0][-1][1]
-        
-        assert end_time - start_time > voting_precision
-        
-        for sel_pred in selected_prediction_list:
-            assert len(sel_pred) > 0
-            assert sel_pred[0][0] == start_time and sel_pred[-1][1] == end_time
-        
-        cluster_row_id_mapper = {}
-        for sel_pred in selected_prediction_list:
-            for onset, offset, cluster in sel_pred:
-                if cluster not in cluster_row_id_mapper:
-                    cluster_row_id_mapper[cluster] = len(cluster_row_id_mapper)
-        row_id_cluster_mapper = { row_id:cluster for cluster, row_id in cluster_row_id_mapper.items() }
-        
-        prediction_matrix = np.zeros( (len(cluster_row_id_mapper), int(np.round( (end_time - start_time)/voting_precision )) ))
-        for sel_pred in selected_prediction_list:
-            for onset, offset, cluster in sel_pred:
-                row_id = cluster_row_id_mapper[cluster]
-                onset_pos = int(np.round( (onset - start_time)/voting_precision))
-                offset_pos = int(np.round( (offset - start_time)/voting_precision ))
+    def concolidate_trials(self, trials, eps, min_samples):
+        # Step 1: Create a list of all segments across all trials
+        segments = []
+        for trial_id, trial in enumerate(trials):
+            for onset, offset, cluster in zip(trial['onset'], trial['offset'], trial['cluster']):
+                segments.append({'onset': onset, 'offset': offset, 'cluster': cluster, 'trial': trial_id})
+        if len(segments) == 0:
+            return  {
+                        "onset":[],
+                        "offset":[],
+                        "cluster": []
+                    }
                 
-                ## Trick: Give the noise cluster slightly higher weight, so that at a certain timestamp, 
-                ## if all trials produce different clusters and one trial predict noise at that point, then the voted label will be noise
-                prediction_matrix[ row_id, onset_pos:offset_pos ] += (1.5 if  cluster == self.noise_cluster else 1)
+        # Step 2: Compute pairwise distance matrix
+        dist_matrix = pairwise_distances([[seg['onset'], seg['offset']] for seg in segments], metric=self.custom_distance)
+
+        # Step 3: Cluster segments using DBSCAN
+        db = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed")
+        labels = db.fit_predict(dist_matrix)
+
+        # Step 4: Merge segments within each cluster
+        merged_segments = []
+        for label in set(labels):
+            if label != -1:  # Ignore noise
+                group_segments = [seg for seg, lbl in zip(segments, labels) if lbl == label]
+                if len(group_segments) == 0:
+                    continue
+                    
+                cluster_name_dict = {}
+                for seg in group_segments:
+                    cluster_name_dict[ seg["cluster"] ] = cluster_name_dict.get( seg["cluster"], 0 ) + 1
+                ## get the most common cluster name
+                cluster_name = sorted(list(cluster_name_dict.items()), key = lambda x:-x[1])[0][0]
                 
-        prediction_voted = np.argmax( prediction_matrix, axis = 0 ) 
-    
-        voted_segments = []    
-        boundaries = np.argwhere( np.array(prediction_voted.tolist()+[-1]) - np.array([-1]+prediction_voted.tolist()) )[:,0]
-        for pos in range( len(boundaries)-1 ):
-            onset = boundaries[pos]
-            offset = boundaries[pos+1]
-            row_id = prediction_voted[onset]
-            onset_time = onset * voting_precision + start_time
-            offset_time = offset * voting_precision + start_time
-            cluster = row_id_cluster_mapper[row_id]
-            
-            if cluster == self.noise_cluster:
-                continue
-            
-            cluster = self.cluster_counter_sufix_matcher.sub("", cluster)
-            voted_segments.append([ onset_time, min(offset_time, end_time), cluster ])
-            
-        return voted_segments
-    
-    
+                avg_onset = np.mean([seg['onset'] for seg in group_segments])
+                avg_offset = np.mean([seg['offset'] for seg in group_segments])
+                merged_segments.append({'onset': avg_onset, 'offset': avg_offset, 'cluster': cluster_name })
+
+        final_pred = {
+            "onset":[ item["onset"] for item in merged_segments ],
+            "offset":[ item["offset"] for item in merged_segments  ],
+            "cluster": [ item["cluster"] for item in merged_segments ]
+        }
+
+        return final_pred
+
+    ### evaluation-related functions
     def compute_syllable_score( self, prediction_on_offset_list, label_on_offset_list, tolerance = 0.02  ):
         
         n_positive_in_prediction = len(prediction_on_offset_list)
@@ -462,7 +423,8 @@ class WhisperSegmenter(SegmenterBase):
     @torch.no_grad()
     def segment( self, audio, num_trials = 3, min_segment_length = 0.02,
                        voting_time_step = 1.0, voting_precision = 0.001, 
-                       batch_size = 16, max_length = 448
+                       batch_size = 16, max_length = 448, 
+                       eps = 0.02,  ## for DBSCAN clustering
                ):
         ## voting_time_step is used to during voting for the final prediction based on multiple trials. 
         ## set it to a smaller value if the segments are very dense with small gaps
@@ -544,56 +506,28 @@ class WhisperSegmenter(SegmenterBase):
                     on_offsets_clip = on_offsets_clip[1:]
                 merged_on_offset_list_of_trial[trial_id] += on_offsets_clip
         
+        
+        trials_results = []
         for trial_id in merged_on_offset_list_of_trial:
             merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
-            merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] > 0 ]
+            merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] >= min_segment_length ]
         
-        if num_trials == 1:
             pred_onsets, pred_offsets, pred_clusters = [], [], []
-            for item in merged_on_offset_list_of_trial[0]:
+            for item in merged_on_offset_list_of_trial[trial_id]:            
                 pred_onsets.append(item[0])
                 pred_offsets.append(item[1])
                 pred_clusters.append(item[2])
-            return {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) }
-                
         
-        ## obtain the final prediction by voting
-        ## NOTE: This voting is done piece by piece
+            trials_results.append(  {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) } )
         
-        voted_segments = []
-        prev_is_cutoff = False
-        total_audio_duration = len(audio) / sr
-        
-        for start_time in np.arange( 0, total_audio_duration, voting_time_step ):
-            end_time = start_time + voting_time_step
-            
-            selected_prediction_list, is_cutoff_list = zip(*[ self.select_prediction_given_time_range(merged_on_offset_list_of_trial[trial_id], start_time, end_time ) for trial_id in merged_on_offset_list_of_trial ])
-            is_cutoff = np.mean(is_cutoff_list) > 0.5
-            
-            voted_selected_segments = self.vote_predictions( selected_prediction_list, voting_precision )
-            
-            ## try two joint two segments that belong to one
-            if  prev_is_cutoff and \
-                len(voted_segments) > 0 and \
-                len(voted_selected_segments) > 0 and \
-                voted_segments[-1][2] == voted_selected_segments[0][2] and \
-                np.abs( voted_segments[-1][1] - voted_selected_segments[0][0] ) < 1e-6:
-                voted_segments[-1][1] = voted_selected_segments[0][1]
-                voted_selected_segments = voted_selected_segments[1:]
-            
-            voted_segments += voted_selected_segments
-            prev_is_cutoff = is_cutoff
-            
-        if min_segment_length is not None:
-            voted_segments = [ item for item in voted_segments if item[1] - item[0] >= min_segment_length  ]
-
-            
-        if len(voted_segments) == 0:
-            pred_onsets, pred_offsets, pred_clusters = [], [], []
+        if num_trials == 1:
+            final_prediction = trials_results[0]
         else:
-            pred_onsets, pred_offsets, pred_clusters = list(zip(*voted_segments  ))
+            min_samples = max( 2, int(np.ceil( num_trials * 0.5 )) )
+            final_prediction = self.concolidate_trials( trials_results, eps, min_samples)
+        return final_prediction
+            
         
-        return {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) }
 
 
 """
@@ -629,7 +563,8 @@ class WhisperSegmenterFast(SegmenterBase):
     @torch.no_grad()
     def segment( self, audio, num_trials = 3, min_segment_length = 0.02,
                        voting_time_step = 1.0, voting_precision = 0.001, 
-                       batch_size = 16, max_length = 448
+                       batch_size = 16, max_length = 448,
+                       eps = 0.02,  ## for DBSCAN clustering
                ):
         
 
@@ -726,55 +661,23 @@ class WhisperSegmenterFast(SegmenterBase):
                     on_offsets_clip = on_offsets_clip[1:]
                 merged_on_offset_list_of_trial[trial_id] += on_offsets_clip
         
+
+        trials_results = []
         for trial_id in merged_on_offset_list_of_trial:
             merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
-            merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] > 0 ]
-
-            
-        if num_trials == 1:
+            merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] >= min_segment_length ]
+        
             pred_onsets, pred_offsets, pred_clusters = [], [], []
-            for item in merged_on_offset_list_of_trial[0]:
+            for item in merged_on_offset_list_of_trial[trial_id]:            
                 pred_onsets.append(item[0])
                 pred_offsets.append(item[1])
                 pred_clusters.append(item[2])
-            return {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) }
-            
-            
-        ## obtain the final prediction by voting
-        ## NOTE: This voting is done piece by piece
         
-        voted_segments = []
-        prev_is_cutoff = False
-        total_audio_duration = len(audio) / sr
+            trials_results.append(  {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) } )
         
-        for start_time in np.arange( 0, total_audio_duration, voting_time_step ):
-            end_time = start_time + voting_time_step
-            
-            selected_prediction_list, is_cutoff_list = zip(*[ self.select_prediction_given_time_range(merged_on_offset_list_of_trial[trial_id], start_time, end_time ) for trial_id in merged_on_offset_list_of_trial ])
-            is_cutoff = np.mean(is_cutoff_list) > 0.5
-            
-            voted_selected_segments = self.vote_predictions( selected_prediction_list, voting_precision )
-            
-            ## try two joint two segments that belong to one
-            if  prev_is_cutoff and \
-                len(voted_segments) > 0 and \
-                len(voted_selected_segments) > 0 and \
-                voted_segments[-1][2] == voted_selected_segments[0][2] and \
-                np.abs( voted_segments[-1][1] - voted_selected_segments[0][0] ) < 1e-6:
-                voted_segments[-1][1] = voted_selected_segments[0][1]
-                voted_selected_segments = voted_selected_segments[1:]
-            
-            voted_segments += voted_selected_segments
-            prev_is_cutoff = is_cutoff
-            
-        if min_segment_length is not None:
-            voted_segments = [ item for item in voted_segments if item[1] - item[0] >= min_segment_length  ]
-
-            
-        if len(voted_segments) == 0:
-            pred_onsets, pred_offsets, pred_clusters = [], [], []
+        if num_trials == 1:
+            final_prediction = trials_results[0]
         else:
-            pred_onsets, pred_offsets, pred_clusters = list(zip(*voted_segments  ))
-        
-        return {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) }
-    
+            min_samples = max( 2, int(np.ceil( num_trials * 0.5 )) )
+            final_prediction = self.concolidate_trials( trials_results, eps, min_samples)
+        return final_prediction

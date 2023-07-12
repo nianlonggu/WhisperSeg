@@ -41,13 +41,14 @@ def train_iteration(batch):
     return loss.item()
 
 def validate( audio_list, label_list, segmenter, sr, tolerance, num_trials, min_segment_length,
-              voting_time_step, voting_precision, batch_size, max_length, target_cluster = None ):
+              voting_time_step, voting_precision, batch_size, max_length, eps, target_cluster = None ):
     total_n_true_positive, total_n_positive_in_prediction, total_n_positive_in_label = 0,0,0
     
     for audio, label in tqdm(zip(audio_list, label_list), total = len(audio_list)):        
         prediction = segmenter.segment( audio, num_trials = num_trials, min_segment_length = min_segment_length,
                                         voting_time_step = voting_time_step, voting_precision = voting_precision,
-                                        batch_size = batch_size, max_length = max_length                                       
+                                        batch_size = batch_size, max_length = max_length,
+                                        eps = eps
                                       )
         n_true_positive, n_positive_in_prediction, n_positive_in_label = segmenter.score( prediction, label, 
                                                                                           target_cluster = target_cluster,
@@ -61,47 +62,6 @@ def validate( audio_list, label_list, segmenter, sr, tolerance, num_trials, min_
     recall = total_n_true_positive / max( total_n_positive_in_label, 1e-12 )
     f1 = 2/(1/max(precision, 1e-12) + 1/max(recall, 1e-12)  )
     return precision, recall, f1, total_n_true_positive, total_n_positive_in_prediction, total_n_positive_in_label
-
-# class Args(object):
-#     pass
-
-# args = Args()
-
-# args.timestamp_precision = 0.005
-# args.timestamp_format = "<|%.3f|>"
-# args.sr = 16000
-# args.hop_length = None
-# args.clip_duration = None
-# args.max_length = 100
-# args.batch_size = 4
-# args.learning_rate = 1e-5
-# args.lr_schedule = "linear"
-# args.max_to_keep = -1
-# args.seed = 66100
-# args.tolerance = 0.02
-# args.num_trials = 3
-# args.min_segment_length = 0.02
-# args.voting_time_step = 1.0
-# args.voting_precision = 0.001
-# args.weight_decay = 0.01
-# args.warmup_steps = 100
-# args.freeze_encoder = 0
-# args.dropout = 0.0
-# args.print_every = 100
-# args.validate_every = None
-# args.validate_per_epoch = 0
-# args.save_every = 1000
-# args.save_per_epoch = 0
-# args.max_num_epochs = None
-# args.max_num_iterations = 1000
-# args.val_ratio = 0.0
-# args.n_device = 1
-# args.gpu_list = None
-# args.initial_model_path = "openai/whisper-large"
-# args.model_folder = "model/DAS/zebra_finch/whisper-large"
-# args.result_folder = "result/DAS/zebra_finch/whisper-large"
-# args.train_dataset_folder = "data/dataset/DAS/zebra_finch/train/"
-# args.test_dataset_folder = "data/dataset/DAS/zebra_finch/test/"
 
 if __name__ == "__main__":
     
@@ -120,6 +80,7 @@ if __name__ == "__main__":
     parser.add_argument("-tolerance", type = float, default = 0.02 )
     parser.add_argument("-num_trials", type = int, default = 3 )
     parser.add_argument("-min_segment_length", type = float, default = 0.02 )
+    parser.add_argument("-eps", type = float, default = 0.02 )
     parser.add_argument("-voting_time_step", type = float, default = 1.0 )
     parser.add_argument("-voting_precision", type = float, default = 0.001 )
     parser.add_argument("-weight_decay", type = float, default = 0.01 )
@@ -272,7 +233,8 @@ if __name__ == "__main__":
                 precision, recall, f1, TP, P_pred, P_true = validate( audio_list_val, label_list_val, segmenter, 
                                                                       args.sr, args.tolerance, args.num_trials, args.min_segment_length,
                                                                       args.voting_time_step, args.voting_precision, 
-                                                                      args.batch_size, args.max_length
+                                                                      args.batch_size, args.max_length,
+                                                                      args.eps,
                                                                     )
                                 
                 print("Epoch: %d, current_batch: %d, validation syllable F1 score: %.2f"%( epoch, current_batch, f1 ))
@@ -331,7 +293,8 @@ if __name__ == "__main__":
         precision, recall, f1, TP, P_pred, P_true = validate( audio_list_test, label_list_test, segmenter, 
                                                               args.sr, args.tolerance, args.num_trials, args.min_segment_length,
                                                               args.voting_time_step, args.voting_precision, 
-                                                              args.batch_size, args.max_length
+                                                              args.batch_size, args.max_length,
+                                                              args.eps,
                                                             )    
         
         with open( args.result_folder + "/test_results.txt", "w" ) as f:
