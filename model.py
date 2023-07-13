@@ -509,6 +509,10 @@ class WhisperSegmenter(SegmenterBase):
         
         trials_results = []
         for trial_id in merged_on_offset_list_of_trial:
+            for item in merged_on_offset_list_of_trial[trial_id]:
+                item[0] = max( 0, item[0] )
+                item[1] = min( item[1], len( audio ) / sr )
+                
             merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
             merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] >= min_segment_length ]
         
@@ -525,10 +529,14 @@ class WhisperSegmenter(SegmenterBase):
         else:
             min_samples = max( 2, int(np.ceil( num_trials * 0.5 )) )
             final_prediction = self.concolidate_trials( trials_results, eps, min_samples)
+            
+        ##formating the final prediction
+        final_prediction["onset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["onset"] ]
+        final_prediction["offset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["offset"] ]
+        
         return final_prediction
             
         
-
 
 """
 WhisperSegmenterFast differs from WhisperSegmenter in
@@ -664,6 +672,10 @@ class WhisperSegmenterFast(SegmenterBase):
 
         trials_results = []
         for trial_id in merged_on_offset_list_of_trial:
+            for item in merged_on_offset_list_of_trial[trial_id]:
+                item[0] = max( 0, item[0] )
+                item[1] = min( item[1], len( audio ) / sr )
+            
             merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
             merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] >= min_segment_length ]
         
@@ -680,4 +692,9 @@ class WhisperSegmenterFast(SegmenterBase):
         else:
             min_samples = max( 2, int(np.ceil( num_trials * 0.5 )) )
             final_prediction = self.concolidate_trials( trials_results, eps, min_samples)
+            
+        ##formating the final prediction
+        final_prediction["onset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["onset"] ]
+        final_prediction["offset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["offset"] ]
+            
         return final_prediction
