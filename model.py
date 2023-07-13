@@ -546,9 +546,11 @@ WhisperSegmenterFast differs from WhisperSegmenter in
 """    
     
 class WhisperSegmenterFast(SegmenterBase):
-    def __init__(self, model_path, device="cpu", compute_type = "float16" ):
+    def __init__(self, model_path, device="cuda", compute_type = "float16" ):
         super().__init__()
         
+        if device == "cpu":
+            compute_type = "float32"
         
         self.model = ctranslate2.models.Whisper(model_path, device = device, compute_type = compute_type)
         self.feature_extractor = WhisperFeatureExtractor.from_pretrained( model_path+"/hf_model" )
