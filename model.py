@@ -258,7 +258,7 @@ class SegmenterBase:
         return (im - im.min()) / max( im.max() - im.min(), 1e-12 )
         
 
-    def plot_spec_and_labels(self, offset, window_size, audio, prediction, label, sr, audio_file_name, feature_extractor ):
+    def plot_spec_and_labels(self, offset, window_size, audio, prediction, label, sr, audio_file_name, feature_extractor, precision_bits ):
         
         all_unique_clusters = sorted(list(set( list(label["cluster"]) + list(prediction["cluster"]) )))
         cluster_color_mapper = {}
@@ -284,7 +284,6 @@ class SegmenterBase:
         spec_xticks_step_size = int(np.round( 0.5 / time_per_column )) 
         spec_xticks_values = np.arange(0, spec.shape[1]+1, spec_xticks_step_size )
         
-        precision_bits = int(re.findall( "\%\.(\d)f", self.timestamp_format)[0])
         # spec_xticks_labels = np.round(spec_xticks_values * time_per_column + start_time, precision_bits) 
         xticks_format = "%%.%df"%(precision_bits)
         spec_xticks_labels = [ xticks_format%(v) for v in spec_xticks_values * time_per_column + start_time ]
@@ -343,8 +342,14 @@ class SegmenterBase:
         plt.legend(handles=patches, loc="upper center", bbox_to_anchor=(0.5, -0.5), ncol=4)
         plt.show()
         
-    def visualize( self, audio, prediction = None, label = None, audio_file_name = "", window_size = 5.0, image_width = 1000):
-        sr = self.sr
+    def visualize( self, audio, prediction = None, label = None, sr = None, default_precision_bits = 3, audio_file_name = "", window_size = 5.0, image_width = 1000):
+        if sr is None:
+            sr = self.sr
+        try:
+            precision_bits = int(re.findall( "\%\.(\d)f", self.timestamp_format)[0])
+        except:
+            precision_bits = default_precision_bits
+      
         if window_size is None:
             window_size = self.clip_duration
 
@@ -374,7 +379,8 @@ class SegmenterBase:
                     label = fixed(label), 
                     sr = fixed(sr), 
                     audio_file_name = fixed(audio_file_name),
-                    feature_extractor = fixed(feature_extractor)
+                    feature_extractor = fixed(feature_extractor),
+                    precision_bits = fixed(precision_bits)
                        )
     
 
