@@ -8,7 +8,7 @@ After the dataset has been downloaded or built. We can start training WhisperSeg
 python train.py --initial_model_path openai/whisper-large --train_dataset_folder data/multi-species/train/  --model_folder model/whisperseg-large-ms --gpu_list 0
 ```
 
-**Illustration of parameters**
+## Illustration of parameters
 * --initial_model_path: The initial checkpoint that is used to initailize the WhisperSeg before training. The value can be:
     * **openai/whisper-large** : the pretrained ASR Whisper model, large version
     * **openai/whisper-medium**
@@ -23,7 +23,7 @@ python train.py --initial_model_path openai/whisper-large --train_dataset_folder
   
   (Troubleshoot: if the training hangs when using multiple GPUs, try adding "NCCL_P2P_DISABLE=1" when running the training script: "NCCL_P2P_DISABLE=1 python train.py xxxxx" )
 
-**Training epochs and maximum training steps.**
+## Training epochs and maximum training steps
 With the setting above, the training will run **3** epochs. This default setting works for most of the cases. 
 
 When the training set is very tiny, e.g, containing just 50 annotated segments in a single audio, 3 epochs may only account for a few iterations. In this case, we can explicitly set the maximum number of training iterations. The modified training command will be:
@@ -34,6 +34,8 @@ Setting a maximum training iteration of 500 works for tiny dataset.
 
 For more training parameters please refer to [train.py](../train.py#L100)
 
-**GPU memory usage**
+## GPU memory usage
 * Finetuning the large-version of WhisperSeg requires 40 GB GPU.
 * Finetuning the smaller version of WhisperSeg, such as WhisperSeg-base, a 10 GB GPU is sufficient.
+
+
