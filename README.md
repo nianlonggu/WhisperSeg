@@ -1,5 +1,9 @@
 # Positive Transfer Of The Whisper Speech Transformer To Human And Animal Voice Activity Detection
-We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Automatic Speech Recognition (ASR) for both human and animal Voice Activity Detection (VAD). For more details, please refer to our paper.
+We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Automatic Speech Recognition (ASR) for both human and animal Voice Activity Detection (VAD). For more details, please refer to our paper:
+> [**Positive Transfer of the Whisper Speech Transformer to Human and Animal Voice Activity Detection**]()
+> 
+> Nianlong Gu, Kanghwi Lee, Maris Basha, Sumit Kumar Ram, Guanghao You, Richard H. R. Hahnloser <br>
+> University of Zurich and ETH Zurich
 
 ## Install Environment
 ```bash
