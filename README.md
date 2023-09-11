@@ -235,7 +235,8 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 ## Citation
 Our paper is under review. The citation information will be updated soon.
 
+## Contact
+Nianlong Gu
+nianlong.gu@uzh.ch
 
-```python
 
-```
