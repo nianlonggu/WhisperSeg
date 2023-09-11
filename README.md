@@ -13,6 +13,8 @@ conda install -c pypi cudnn -y
 Please refer to the following documents (by clicking) for the complete pipeline of training WhisperSeg, including 1) dataset processing, 2) model training and 3) model evaluation.
 
 1. [Dataset Processing](docs/DatasetProcessing.md)
+2. [Model Training](docs/ModelTraining.md)
+3. [Evaluation](docs/Evaluation.md)
 
 ## Voice Activity Detection Demo 
 We demonstrate here using a WhisperSeg trained on multi-species data to segment the audio files of different species.
