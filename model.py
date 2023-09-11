@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import torch
-from transformers import WhisperFeatureExtractor, WhisperTokenizer, WhisperForConditionalGeneration
+from transformers import WhisperFeatureExtractor, WhisperTokenizer, WhisperForConditionalGeneration, WhisperConfig
 from glob import glob
 import re
 import matplotlib.pyplot as plt
@@ -15,131 +15,236 @@ from matplotlib.patches import Patch
 import matplotlib.cm as cm
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import DBSCAN
-
+from audio_utils import WhisperSegFeatureExtractor
+import time
 from PIL import Image
+from scipy.stats import mode
 
-def load_model( model_folder, initial_model_path, sr, hop_length, input_features_length, 
-                timestamp_format, timestamp_precision, clip_duration, dropout = 0.0):
-    ckpt_list =  glob( model_folder + "/*" )
-    if len( ckpt_list ) >0:
-        ckpt_list.sort( key = os.path.getmtime )
-        ckpt_name = ckpt_list[-1]
-        current_batch = int(ckpt_name.split("-")[-1])
-        model = WhisperForConditionalGeneration.from_pretrained(ckpt_name)
-        feature_extractor = WhisperFeatureExtractor.from_pretrained(ckpt_name)
-        tokenizer = WhisperTokenizer.from_pretrained(ckpt_name, language = "english" )
-        print("Model loaded!")
-    else:
-        current_batch = 0
-        model = WhisperForConditionalGeneration.from_pretrained(initial_model_path)
-        ## chunk the position embedding to 0.5 * input_features_length. This can help to save memory usage and speed up training!
-        model.config.max_source_positions = int( 0.5*input_features_length )
-        with torch.no_grad():
-            model.model.encoder.embed_positions.weight = torch.nn.Parameter(
-                          model.model.encoder.embed_positions.weight[:model.config.max_source_positions,:]
-            )
-            model.model.encoder.embed_positions.num_embeddings = model.config.max_source_positions
-        
-        model.config.clip_duration = clip_duration
-        model.config.sr = sr
-        model.config.timestamp_format = timestamp_format
-        model.config.timestamp_precision = timestamp_precision
-                    
-        model.config.dropout = dropout
-        model.model.encoder.dropout = dropout
-        for layer in model.model.encoder.layers:
-            layer.dropout = dropout
-        model.model.decoder.dropout = dropout
-        for layer in model.model.decoder.layers:
-            layer.dropout = dropout
-            
-        model.config.cluster_codebook = {}
+from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
 
-        feature_extractor = WhisperFeatureExtractor(  
-            feature_size=80,
-            sampling_rate=sr,
-            hop_length=hop_length,
-            chunk_length=30,
-            n_fft=400,
-            padding_value=0.0,
-            return_attention_mask=False)
-        
-        ## tokeners for openai/whisper-large openai/whisper-base openai/whisper-small ... are all the same!
-        tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-large", language = "english" )
-        # tokenizer.add_special_tokens( { 'additional_special_tokens': [timestamp_format%(i*timestamp_precision) for i in range(1500+1)] } )
-        ## tokenizer.add_special_tokens will change all_special_ids, while tokenizer.add_tokens([XXX,], special_tokens=True ) does not. 
-        ## change of all_special_ids will result in the change of encoding behavior
-        tokenizer.add_tokens( [timestamp_format%(i*timestamp_precision) for i in range(1500+1)], special_tokens=True  )
-        
-    return model, feature_extractor, tokenizer, current_batch
+from huggingface_hub import snapshot_download
+import hashlib
+import os
+import shutil
+
+def download_model( model_path, ignore_cache = False ):
+    ## This model path is a local folder path
+    if os.path.exists( model_path ):
+        return model_path
+    ## Suppose that this model path is a model name stored at huggingface 
+    cache_dir = os.path.expanduser(os.getenv("WHISPERSEG_MODEL_CACHE", "~/.cache/whisperseg_models/"))
+    model_folder_name = hashlib.sha256( model_path.encode()).hexdigest() 
+
+    local_model_path = os.path.join( cache_dir, model_folder_name )  
+    if ignore_cache:
+        if os.path.exists( local_model_path ):
+            shutil.rmtree( local_model_path )
+
+    if not os.path.exists(local_model_path) or len(os.listdir(local_model_path)) == 0:
+        snapshot_download(model_path, local_dir = local_model_path )
+    return local_model_path
 
 
-def save_model( model, feature_extractor, tokenizer, current_batch, model_folder, max_to_keep ):
+def save_model( model, tokenizer, current_step, model_folder, max_to_keep ):
     try:
         model = model.module
     except:
         pass
     
     ckpt_list =  glob( model_folder + "/*" )
-    feature_extractor.save_pretrained( model_folder+"/checkpoint-%d"%(current_batch) )
-    tokenizer.save_pretrained( model_folder+"/checkpoint-%d"%(current_batch) )
-    model.save_pretrained( model_folder+"/checkpoint-%d"%(current_batch) )
+    tokenizer.save_pretrained( model_folder+"/checkpoint-%d"%(current_step) )
+
+    model.config.current_step = current_step
+    model.save_pretrained( model_folder+"/checkpoint-%d"%(current_step) )
     
     if max_to_keep > 0 and len( ckpt_list ) > max_to_keep:
         ckpt_list.sort( key = os.path.getmtime )
         ckpt_name = ckpt_list[0]
         os.system("rm -r %s"%(ckpt_name) )
         
+def load_model( initial_model_path, total_spec_columns, dropout = 0.0):
 
+    model = WhisperForConditionalGeneration.from_pretrained(initial_model_path)
+    model.config.max_source_positions = int( 0.5*total_spec_columns )
+    with torch.no_grad():
+        model.model.encoder.embed_positions.weight = torch.nn.Parameter(
+                        model.model.encoder.embed_positions.weight[:model.config.max_source_positions,:]
+        )
+        model.model.encoder.embed_positions.num_embeddings = model.config.max_source_positions
+    
+    model.config.total_spec_columns = total_spec_columns
+    model.config.dropout = dropout
+    model.model.encoder.dropout = dropout
+    for layer in model.model.encoder.layers:
+        layer.dropout = dropout
+    model.model.decoder.dropout = dropout
+    for layer in model.model.decoder.layers:
+        layer.dropout = dropout
+
+    if not hasattr( model.config, "cluster_codebook" ):
+        model.config.cluster_codebook = {}
+
+    if not hasattr( model.config, "species_codebook" ):
+        model.config.species_codebook = {
+            "zebra_finch":"<|zebra_finch|>",
+            "bengalese_finch":"<|bengalese_finch|>",
+            "mouse":"<|mouse|>",
+            "marmoset":"<|marmoset|>",
+            "human":"<|human|>",
+            ## set unknown for other species
+            "unknown":"<|unknown|>"
+        }
+
+    ## do not change nccratliri/whisper-large to openai/whisper-large, since the tokenizer in openai/whisper-large has changed its vocabulary
+    tokenizer = WhisperTokenizer.from_pretrained("nccratliri/whisper-large", language = "english" )
+    tokenizer.add_tokens( ["<|%d|>"%(i) for i in range( total_spec_columns + 1)], special_tokens=True  )
+    tokenizer.add_tokens( [ v for k, v in model.config.species_codebook.items() ], special_tokens=True )
+        
+    return model, tokenizer
+
+        
 class SegmenterBase:
     def __init__( self,  ):
-        self.segment_matcher = re.compile("<\|([0-9]+\.[0-9]+)\|>(\d+?)<\|([0-9]+\.[0-9]+)\|>")
-        self.colors = [np.array(mcolors.hex2color(color_string)) for color_string in list(mcolors.TABLEAU_COLORS.values()) + list(mcolors.CSS4_COLORS.values())][1:] # Skip the first color since it looks not so good ...
-        
-        unique_colors = None
-        for color_arr in self.colors:
-            if unique_colors is None:
-                unique_colors = np.asarray([color_arr])
-            else:
-                if np.all( unique_colors == color_arr, axis = 1 ).sum() == 0:
-                    unique_colors = np.concatenate( [unique_colors, color_arr[np.newaxis,:]], axis = 0 )
-        self.colors = unique_colors[ unique_colors.mean(axis = 1) < 0.8, : ]
-        
-        
+        self.segment_matcher = re.compile("<\|([0-9]+)\|>(\d+?)<\|([0-9]+)\|>")
+        self.total_spec_columns = None
+        self.precision_bits = 3
         self.cluster_codebook = None
-        self.inverse_cluster_codebook = None
-        self.cmap = cm.get_cmap("jet")
-        
-        
-        ### These paremeters are used for voting the predictions of multiple trials to get the final prediction
-        self.noise_cluster = ">>>__NOISE_SEG_CLUSTER__<<<"
-        self.cluster_counter_sufix = ">>>__CLUSTER_COUNTER_%d__<<<"
-        self.cluster_counter_sufix_matcher = re.compile(">>>__CLUSTER_COUNTER_\d+__<<<")
-    
+
     ### segmentation-related functions:
-    def extract_segments( self, text ):
+    def get_sliced_audios_features( self,  audio, sr, min_frequency, spec_time_step, num_trials):
+        feature_extractor = WhisperSegFeatureExtractor( sr, spec_time_step, min_frequency = min_frequency )
+        clip_duration = self.total_spec_columns * spec_time_step
+        
+        max_num_padding_samples = int( clip_duration * sr )
+        audio_left_pad = np.zeros( max_num_padding_samples, dtype = np.float32 )
+        audio_clip_length = int(clip_duration * sr)
+        
+        sliced_audios_features = []
+        for trial_id in range(num_trials):            
+            
+            padding_time = np.round( clip_duration * trial_id / num_trials / spec_time_step ) * spec_time_step
+            num_padding_samples = int( padding_time * sr )
+            audio_padded = np.concatenate( [ audio_left_pad[ len(audio_left_pad) - num_padding_samples: ],
+                                             audio
+                                           ], axis = 0 
+                                         )
+            
+            ## This loop must be executed once even for zero length audio
+            for pos in range( 0, max(len(audio_padded), 1), audio_clip_length ):
+                offset_time = pos / sr - padding_time
+                
+                audio_clip = audio_padded[pos:pos+audio_clip_length]
+                audio_clip_padded = np.concatenate([ audio_clip, np.zeros( audio_clip_length - len(audio_clip), dtype = np.float32 ) ], axis = 0 )
+            
+                input_features = feature_extractor(audio_clip_padded, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
+                assert input_features.shape == (80, self.total_spec_columns)                
+                sliced_audios_features.append( ( trial_id, offset_time, input_features, len(audio_clip)/sr ) )
+        return sliced_audios_features
+    
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams):
+        pass
+    
+    def extract_segments( self, text, spec_time_step ):
+        inverse_cluster_codebook = { v:k for k,v in self.cluster_codebook.items()}   
         segment_list = []
         match_res_list = self.segment_matcher.findall( text )
         for onset_text, cluster_id_text, offset_text in match_res_list:
-            try:
-                onset = float( onset_text )
-                offset = float( offset_text )
-                cluster_id = int( cluster_id_text )
-                assert cluster_id in self.inverse_cluster_codebook
-                assert offset - onset > 0
-                cluster = self.inverse_cluster_codebook[cluster_id]
-                segment_list.append( [ onset, offset, cluster ] )
-            except:
+            onset = int( onset_text ) * spec_time_step * RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+            offset = int( offset_text ) * spec_time_step * RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+            cluster_id = int( cluster_id_text )
+            
+            if cluster_id not in inverse_cluster_codebook:
                 continue
+            if offset - onset <= 0:
+                continue
+
+            cluster = inverse_cluster_codebook[cluster_id]
+            segment_list.append( [ onset, offset, cluster ] )
         return segment_list
     
+    
+    def parse_generation( self, generated_text_list, sliced_audios_features,
+                         min_segment_length, 
+                         audio_duration,
+                         spec_time_step,
+                         num_trials,
+                         eps, time_per_frame_for_voting,
+                         consolidation_method
+                        ):
+        
+        ## convert generated text to on_offsets
+        on_offset_list_of_trial = {}
+        for count, generated_text in enumerate(generated_text_list):
+            trial_id, offset_time, _, duration = sliced_audios_features[count]
+
+            if trial_id not in on_offset_list_of_trial:
+                on_offset_list_of_trial[trial_id] = []            
+
+            on_offsets_clip = self.extract_segments( generated_text, spec_time_step )
+            for item in on_offsets_clip:
+                item[0] += offset_time
+                item[1] += offset_time
+
+            on_offset_list_of_trial[trial_id].append( on_offsets_clip )
+            
+        ## merge (or concatenate) the on_offset of each trial separately
+        merged_on_offset_list_of_trial = {}
+        for trial_id in on_offset_list_of_trial:
+            merged_on_offset_list_of_trial[trial_id] = []
+            for on_offsets_clip in on_offset_list_of_trial[trial_id]:
+                
+                if len(merged_on_offset_list_of_trial[trial_id]) > 0 and \
+                   len(on_offsets_clip)>0 and \
+                   merged_on_offset_list_of_trial[trial_id][-1][1] == on_offsets_clip[0][0] and \
+                   merged_on_offset_list_of_trial[trial_id][-1][2] == on_offsets_clip[0][2]:  
+                    ## previous offset == current onset and the cluster type is the same, then we merge them
+                    
+                    merged_on_offset_list_of_trial[trial_id][-1][1] = on_offsets_clip[0][1]
+                    on_offsets_clip = on_offsets_clip[1:]
+                merged_on_offset_list_of_trial[trial_id] += on_offsets_clip
+        
+        
+        trials_results = []
+        for trial_id in merged_on_offset_list_of_trial:
+            for item in merged_on_offset_list_of_trial[trial_id]:
+                item[0] = max( 0, item[0] )
+                item[1] = min( item[1], audio_duration )
+                
+            merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
+            merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] >= min_segment_length ]
+        
+            pred_onsets, pred_offsets, pred_clusters = [], [], []
+            for item in merged_on_offset_list_of_trial[trial_id]:            
+                pred_onsets.append(item[0])
+                pred_offsets.append(item[1])
+                pred_clusters.append(item[2])
+        
+            trials_results.append(  {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) } )
+        
+        if num_trials == 1:
+            final_prediction = trials_results[0]
+        else:
+            if consolidation_method == "clustering":
+                min_samples = max( 2, int(np.ceil( num_trials * 0.5 )) )
+                final_prediction = self.consolidate_trials_by_clustering( trials_results, eps, min_samples)
+            else:
+                final_prediction = self.consolidate_trials_by_voting( trials_results, time_per_frame_for_voting)
+            
+        ##formating the final prediction
+        final_prediction["onset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["onset"] ]
+        final_prediction["offset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["offset"] ]
+        
+        return final_prediction
+
+
     ### multi-trial consolidation 
     def custom_distance(self, segment1, segment2):
         onset_diff = abs(segment1[0] - segment2[0])
         offset_diff = abs(segment1[1] - segment2[1])
         return (onset_diff + offset_diff) / 2
+    
 
-    def concolidate_trials(self, trials, eps, min_samples):
+    def consolidate_trials_by_clustering(self, trials, eps, min_samples):
         # Step 1: Create a list of all segments across all trials
         segments = []
         for trial_id, trial in enumerate(trials):
@@ -151,7 +256,7 @@ class SegmenterBase:
                         "offset":[],
                         "cluster": []
                     }
-                
+
         # Step 2: Compute pairwise distance matrix
         dist_matrix = pairwise_distances([[seg['onset'], seg['offset']] for seg in segments], metric=self.custom_distance)
 
@@ -176,7 +281,9 @@ class SegmenterBase:
                 avg_onset = np.mean([seg['onset'] for seg in group_segments])
                 avg_offset = np.mean([seg['offset'] for seg in group_segments])
                 merged_segments.append({'onset': avg_onset, 'offset': avg_offset, 'cluster': cluster_name })
-
+                
+        merged_segments.sort( key = lambda x:x["onset"] )
+                        
         final_pred = {
             "onset":[ item["onset"] for item in merged_segments ],
             "offset":[ item["offset"] for item in merged_segments  ],
@@ -184,6 +291,100 @@ class SegmenterBase:
         }
 
         return final_pred
+    
+    def consolidate_trials_by_voting(self, trials, time_per_frame_for_voting):
+        all_timestamps = []
+        for trial in trials:
+            all_timestamps += list( trial["onset"] )
+            all_timestamps += list( trial["offset"] )
+        if len(all_timestamps) == 0 or len(all_timestamps) % 2 != 0:
+            return  {
+                        "onset":[],
+                        "offset":[],
+                        "cluster": []
+                    }
+        min_time = np.min( all_timestamps )
+        max_time = np.max( all_timestamps )
+        num_frames = int(np.round( ( max_time - min_time ) / time_per_frame_for_voting )) 
+        
+        all_frame_wise_predictions = []
+        for trial in trials:
+            frame_wise_prediction =  np.ones( num_frames ) * -1
+            for pos in range(len( trial["onset"] )):
+                onset = trial["onset"][pos] - min_time
+                offset = trial["offset"][pos] - min_time
+                cluster_id = self.cluster_codebook[trial["cluster"][pos]]
+                frame_wise_prediction[ int( np.round(onset / time_per_frame_for_voting) ): int( np.round( offset / time_per_frame_for_voting ) ) ] = cluster_id
+            all_frame_wise_predictions.append( frame_wise_prediction )
+            
+        all_frame_wise_predictions = np.asarray(all_frame_wise_predictions)
+        voted_frame_wise_prediction, counts = mode(all_frame_wise_predictions, axis=0)
+        voted_frame_wise_prediction_right_pad = np.array( voted_frame_wise_prediction.tolist() + [-1] ) 
+        voted_frame_wise_prediction_left_pad = np.array(  [-1] + voted_frame_wise_prediction.tolist() ) 
+        event_positions = np.argwhere(voted_frame_wise_prediction_right_pad - voted_frame_wise_prediction_left_pad != 0)[:,0]
+        
+        final_onsets = []
+        final_offsets = []
+        final_clusters = []
+        
+        inverse_cluster_codebook = { v:k for k,v in self.cluster_codebook.items() } 
+        
+        for idx in range(0,len(event_positions)-1):
+            onset_pos = event_positions[ idx ]
+            offset_pos = event_positions[ idx + 1 ]
+            cluster_id = int(np.round(np.mean(voted_frame_wise_prediction[ onset_pos: offset_pos ])))
+            
+            if cluster_id == -1:
+                continue
+            
+            final_onsets.append( onset_pos * time_per_frame_for_voting + min_time )
+            final_offsets.append( offset_pos * time_per_frame_for_voting + min_time )
+            final_clusters.append( inverse_cluster_codebook[ cluster_id ] )
+            
+        final_pred = {
+            "onset":final_onsets,
+            "offset":final_offsets,
+            "cluster":final_clusters
+        }
+
+        return final_pred
+    
+    
+    @torch.no_grad()
+    def segment( self, audio, sr,
+                       min_frequency = 0,
+                       spec_time_step = 0.0025,
+                       min_segment_length = 0.02,
+                       eps = 0.02,  ## for DBSCAN clustering
+                       time_per_frame_for_voting = 0.001, ## for voting
+                       consolidation_method = "clustering",
+                       max_length = 448, 
+                       batch_size = 16, 
+                       num_trials = 3,
+                       num_beams = 4
+               ):
+        tic1 = time.time()
+        sliced_audios_features = self.get_sliced_audios_features( audio, sr, min_frequency, spec_time_step, num_trials)
+        tic2 = time.time()
+        generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams )
+        tic3 = time.time()
+        final_prediction = self.parse_generation( 
+            generated_text_list, sliced_audios_features,
+                         min_segment_length, 
+                         len(audio)/sr,
+                         spec_time_step,
+                         num_trials,
+                         eps, time_per_frame_for_voting,
+                         consolidation_method 
+                        )
+        tic4 = time.time()
+        
+        # print("get sliced audio features time:",tic2 - tic1)
+        # print("generation time:",tic3 - tic2)
+        # print("parsing time:",tic4 - tic3)
+        
+        return final_prediction
+            
 
     ### evaluation-related functions
     def compute_syllable_score( self, prediction_on_offset_list, label_on_offset_list, tolerance = 0.02  ):
@@ -205,9 +406,8 @@ class SegmenterBase:
                 label_on_offset_list.pop(count)
         
         return n_true_positive, n_positive_in_prediction, n_positive_in_label
-        
-    
-    def score( self, prediction, label, target_cluster = None, tolerance = 0.02 ):
+
+    def segment_score( self, prediction, label, target_cluster = None, tolerance = 0.02 ):
         
         prediction_on_offset_list = []
         for pos in range(len(prediction["onset"])):
@@ -229,168 +429,63 @@ class SegmenterBase:
         f1 = 2/(1/ max(precision, 1e-12) + 1/max(recall, 1e-12)  )
             
         return TP, P_pred, P_label, precision, recall, f1
-        
     
-    """"
-    The following functions are used for implement an interactive visulization function to see the spectrogram and the label
-    """
-
-    def chunk_audio(self, audio, start_time, end_time, sr):
-        start_idx = int( start_time * sr )
-        end_idx = int( end_time * sr )
-        chunked_audio = audio[start_idx:end_idx]
-        return chunked_audio    
-
-    def chunk_label(self, label, start_time, end_time ):
+    def frame_score(self, prediction, label, target_cluster = None, time_per_frame_for_scoring = 0.01 ):
+        prediction_segments = prediction
+        label_segments = label
         
-        label_onset_arr = np.array(label["onset"])
-        label_offset_arr = np.array(label["offset"])
-        
-        intersected_indices = np.logical_and( label_onset_arr < end_time, label_offset_arr > start_time )
-        chunked_label = {
-                "onset": (np.maximum(label_onset_arr[intersected_indices], start_time ) - start_time).tolist(),
-                "offset": (np.minimum(label_offset_arr[intersected_indices], end_time ) - start_time).tolist(),
-                "cluster": [ label["cluster"][idx] for idx in np.argwhere(intersected_indices)[:,0] ]
-            }
-        return chunked_label   
-    
-    def min_max_norm(self, im):
-        return (im - im.min()) / max( im.max() - im.min(), 1e-12 )
-        
-
-    def plot_spec_and_labels(self, offset, window_size, audio, prediction, label, sr, audio_file_name, feature_extractor, precision_bits ):
-        
-        all_unique_clusters = sorted(list(set( list(label["cluster"]) + list(prediction["cluster"]) )))
-        cluster_color_mapper = {}
-        for cluster in all_unique_clusters:
-            if cluster not in cluster_color_mapper:
-                cluster_color_mapper[cluster] = self.colors[ len(cluster_color_mapper) % len(self.colors) ]
-        
-        patches = [Patch(color=color, label=cluster) for cluster, color in cluster_color_mapper.items()]
+        prediction_segments["cluster"] = list( map(str, prediction_segments["cluster"]) )
+        label_segments["cluster"] = list( map(str, label_segments["cluster"]) )
                 
-        start_time = offset
-        end_time = start_time + window_size
+        cluster_to_id_mapper = {}
+        for cluster in list(prediction_segments["cluster"]) + list(label_segments["cluster"]):
+            if cluster not in cluster_to_id_mapper:
+                cluster_to_id_mapper[cluster] = len( cluster_to_id_mapper )
         
-        audio_chunked = self.chunk_audio( audio, start_time, end_time, sr )
-        label_chunked = self.chunk_label( label, start_time, end_time )
-        prediction_chunked = self.chunk_label( prediction, start_time, end_time )
-        
-        spec = feature_extractor( audio_chunked, sampling_rate=sr, padding = "do_not_pad")["input_features"][0]
-        
-        ## convert spec to colorful (3 channel)
-        spec_colorful =  np.flip( self.cmap(self.min_max_norm(spec))[:,:,:3], axis = 0)
-        
-        time_per_column = feature_extractor.hop_length / sr
-        spec_xticks_step_size = int(np.round( 0.5 / time_per_column )) 
-        spec_xticks_values = np.arange(0, spec.shape[1]+1, spec_xticks_step_size )
-        
-        # spec_xticks_labels = np.round(spec_xticks_values * time_per_column + start_time, precision_bits) 
-        xticks_format = "%%.%df"%(precision_bits)
-        spec_xticks_labels = [ xticks_format%(v) for v in spec_xticks_values * time_per_column + start_time ]
-        
-        
-        spec_labels_image = np.ones( ( spec.shape[1], 3 ), dtype = np.float32 )
-        for pos in range(len(label_chunked["onset"])):
-            onset_idx = int(np.round(label_chunked["onset"][pos]/time_per_column))
-            offset_idx = int(np.round(label_chunked["offset"][pos]/time_per_column)) 
-            cluster = label_chunked["cluster"][pos]
+        all_timestamps = list(prediction_segments["onset"]) + list(prediction_segments["offset"]) + \
+                            list(label_segments["onset"]) + list( label_segments["offset"] )
+        if len(all_timestamps) == 0:
+            max_time = 1.0
+        else:
+            max_time = np.max( all_timestamps )
             
-            ## Add a gap manually if there are two connected segments that have the same cluster but are segmented into two parts (either by human or by machine)
-            if pos + 1<len(label_chunked["onset"]) and \
-                          offset_idx == int(np.round(label_chunked["onset"][pos+1]/time_per_column)) and \
-                          cluster == label_chunked["cluster"][pos+1]:
-                offset_idx -= 1
+        num_frames = int(np.round( max_time / time_per_frame_for_scoring )) + 1
+        
+        frame_wise_prediction = np.ones( num_frames ) * -1
+        for idx in range( len( prediction_segments["onset"] ) ):
+            onset_pos = int(np.round( prediction_segments["onset"][idx] / time_per_frame_for_scoring ))
+            offset_pos = int(np.round( prediction_segments["offset"][idx] / time_per_frame_for_scoring ))
+            frame_wise_prediction[onset_pos:offset_pos] = cluster_to_id_mapper[ prediction_segments["cluster"][idx] ]
             
-            spec_labels_image[onset_idx:offset_idx,:] = cluster_color_mapper[cluster]
-        spec_labels_image = np.tile( spec_labels_image[np.newaxis,:,:], [40,1,1] )
-        
-        
-        spec_preds_image = np.ones( (spec.shape[1], 3), dtype = np.float32 )
-        for pos in range(len(prediction_chunked["onset"])):
-            onset_idx = int(np.round(prediction_chunked["onset"][pos]/time_per_column))
-            offset_idx = int(np.round(prediction_chunked["offset"][pos]/time_per_column))
-            cluster = prediction_chunked["cluster"][pos]
+        frame_wise_label = np.ones( num_frames ) * -1
+        for idx in range( len( label_segments["onset"] ) ):
+            onset_pos = int(np.round( label_segments["onset"][idx] / time_per_frame_for_scoring ))
+            offset_pos = int(np.round( label_segments["offset"][idx] / time_per_frame_for_scoring ))
+            frame_wise_label[onset_pos:offset_pos] = cluster_to_id_mapper[ label_segments["cluster"][idx] ]
             
-            if pos + 1<len(prediction_chunked["onset"]) and \
-                            offset_idx == int(np.round(prediction_chunked["onset"][pos+1]/time_per_column)) and \
-                            cluster == prediction_chunked["cluster"][pos+1]:
-                offset_idx -= 1
+        if target_cluster is None:
+            TP = np.logical_and( frame_wise_label != -1, frame_wise_prediction == frame_wise_label ).sum()
+            P_in_pred = (frame_wise_prediction != -1).sum()
+            P_in_label = (frame_wise_label != -1).sum()
+        else:
+            target_cluster_id = cluster_to_id_mapper[target_cluster]
+            TP = np.logical_and( frame_wise_label == target_cluster_id, frame_wise_prediction == frame_wise_label ).sum()
+            P_in_pred = (frame_wise_prediction == target_cluster_id).sum()
+            P_in_label = (frame_wise_label == target_cluster_id).sum()
             
-            spec_preds_image[onset_idx:offset_idx,:] = cluster_color_mapper[cluster]
-        spec_preds_image = np.tile( spec_preds_image[np.newaxis,:,:], [40,1,1] )
         
-        
-        canvas_image = np.ones( ( spec_colorful.shape[0] + 10 + 40 + 10 + 40, spec_labels_image.shape[1], 3 ) )
-        canvas_image[:spec_colorful.shape[0],:,:] = spec_colorful
-        canvas_image[spec_colorful.shape[0]+10:spec_colorful.shape[0]+50,:,:] = spec_preds_image 
-        canvas_image[spec_colorful.shape[0]+60:spec_colorful.shape[0]+100,:,:] = spec_labels_image
-            
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10,4), tight_layout=True, sharex=False)        
-        
-        ax.imshow( canvas_image, interpolation="bilinear" ) 
-        
-        ax.spines[['top', 'right', 'left']].set_visible(False)
-        ax.text(-137,35,"Spectrogram:", fontfamily = "monospace" )
-        ax.text(-137,-20,"Wav file name: %s"%(audio_file_name), fontfamily = "monospace" )
-        ax.text(-137,115,"Prediction:", fontfamily = "monospace" )
-        ax.text(-137,165,"Label:", fontfamily = "monospace" )
-        ax.set_yticks([])
-        ax.set_xticks( spec_xticks_values, spec_xticks_labels )
-        ax.set_xlabel("time (s)")
-        
-        plt.subplots_adjust(wspace=0, hspace=-0.8)    
-        plt.legend(handles=patches, loc="upper center", bbox_to_anchor=(0.5, -0.5), ncol=4)
-        plt.show()
-        
-    def visualize( self, audio, prediction = None, label = None, sr = None, default_precision_bits = 3, audio_file_name = "", window_size = 5.0, image_width = 1000):
-        if sr is None:
-            sr = self.sr
-        try:
-            precision_bits = int(re.findall( "\%\.(\d)f", self.timestamp_format)[0])
-        except:
-            precision_bits = default_precision_bits
-      
-        if window_size is None:
-            window_size = self.clip_duration
-
-        time_per_col = window_size / image_width
-        hop_length = int( time_per_col * sr )
-        feature_extractor = WhisperFeatureExtractor(  
-            feature_size=80,
-            sampling_rate=sr,
-            hop_length=hop_length,
-            chunk_length=30,
-            n_fft=400,
-            padding_value=0.0,
-            return_attention_mask=False)
-        
-        if label is None:
-            label = {"onset":[], "offset":[], "cluster":[] }
-        if prediction is None:
-            prediction = {"onset":[], "offset":[], "cluster":[] }
-        label["cluster"] = list(map(str, label["cluster"]))
-        prediction["cluster"] = list(map(str, prediction["cluster"]))
-        
-        return interact(self.plot_spec_and_labels, 
-                    offset=(0, max(0, len(audio)/sr - window_size ), window_size / 20 ), 
-                    window_size = fixed(window_size), 
-                    audio = fixed(audio), 
-                    prediction = fixed(prediction),
-                    label = fixed(label), 
-                    sr = fixed(sr), 
-                    audio_file_name = fixed(audio_file_name),
-                    feature_extractor = fixed(feature_extractor),
-                    precision_bits = fixed(precision_bits)
-                       )
+        precision = TP / max(P_in_pred, 1e-12)
+        recall = TP / max(P_in_label, 1e-12)
+        f1 = 2/( 1/max( precision, 1e-12 ) + 1/max( recall, 1e-12 ) )
+                
+        return TP, P_in_pred, P_in_label, precision, recall, f1
     
-
     
 class WhisperSegmenter(SegmenterBase):        
-    def __init__(self, model_path = None, device = None, model = None, feature_extractor = None, tokenizer = None):
+    def __init__(self, model_path = None, device = None, model = None, tokenizer = None):
         super().__init__()
         if model_path is not None:
             self.model = WhisperForConditionalGeneration.from_pretrained( model_path )
-            self.feature_extractor = WhisperFeatureExtractor.from_pretrained( model_path )
             self.tokenizer = WhisperTokenizer.from_pretrained(model_path, language = "english" )
             if device is not None:
                 self.model = self.model.to(device)
@@ -400,234 +495,74 @@ class WhisperSegmenter(SegmenterBase):
             except:
                 self.model = model
             
-            self.feature_extractor = feature_extractor
             self.tokenizer = tokenizer
         
         self.device = list( self.model.parameters() )[0].device
         
-        # here 2 is determined by the conv kernel of the whisper
-        self.sr = self.model.config.sr
-        self.clip_duration = self.model.config.clip_duration
-        self.timestamp_precision = self.model.config.timestamp_precision
-        self.timestamp_format = self.model.config.timestamp_format
-        self.precision_bits = int(re.findall( "\%\.(\d)f", self.timestamp_format)[0])
-        self.input_features_length = int(self.clip_duration/ (self.feature_extractor.hop_length / self.sr))
-
+        self.total_spec_columns = self.model.config.total_spec_columns
         self.cluster_codebook = self.model.config.cluster_codebook
         self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
             
-    
-    
     def update_cluster_codebook(self, cluster_codebook):
         self.model.config.cluster_codebook = cluster_codebook
         
         self.cluster_codebook = cluster_codebook
         self.inverse_cluster_codebook = { cluster_id:cluster for cluster, cluster_id in self.cluster_codebook.items() }
                 
-            
-        
-    @torch.no_grad()
-    def segment( self, audio, num_trials = 3, min_segment_length = 0.02,
-                       voting_time_step = 1.0, voting_precision = 0.001, 
-                       batch_size = 16, max_length = 448, 
-                       eps = 0.02,  ## for DBSCAN clustering
-               ):
-        ## voting_time_step is used to during voting for the final prediction based on multiple trials. 
-        ## set it to a smaller value if the segments are very dense with small gaps
-        
-        clip_duration = self.clip_duration
-        sr = self.sr
-        
-        voting_precision = min( voting_precision, self.timestamp_precision )
-        
-        max_num_padding_samples = int( clip_duration * sr )
-        audio_left_pad = np.zeros( max_num_padding_samples, dtype = np.float32 )
-        audio_clip_length = int(clip_duration * sr)
-        
-        sliced_audios_features = []
-        for trial_id in range(num_trials):            
-            
-            padding_time = np.round( clip_duration * trial_id / num_trials / self.timestamp_precision ) * self.timestamp_precision
-            num_padding_samples = int( padding_time * sr )
-                        
-            audio_padded = np.concatenate( [ audio_left_pad[ len(audio_left_pad) - num_padding_samples: ],
-                                             audio
-                                           ], axis = 0 )
-            
-            ## This loop must be executed once even for zero length audio
-            for pos in range( 0, max(len(audio_padded), 1), audio_clip_length ):
-                offset_time = pos / sr - padding_time
-                
-                audio_clip = audio_padded[pos:pos+audio_clip_length]
-                audio_clip_padded = np.concatenate([ audio_clip, np.zeros( audio_clip_length - len(audio_clip), dtype = np.float32 ) ], axis = 0 )
-            
-                input_features = self.feature_extractor(audio_clip_padded, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
-                feature_padding_value = input_features.min() if input_features.shape[1] != 0 else -1.0
-                input_features = input_features[:,:self.input_features_length] 
-                input_features = np.concatenate([ 
-                                    input_features, 
-                                    feature_padding_value * np.ones( ( input_features.shape[0], self.input_features_length - input_features.shape[1]) )
-                                  ], axis = 1 ).astype(np.float32)
-                
-                sliced_audios_features.append( ( trial_id, offset_time, input_features, len(audio_clip)/sr ) )
-                
-        ### the generation part
+
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams ):
         generated_text_list = []
+        
+        generation_kwargs = {
+            "top_k": 0.0,
+            "top_p": 1.0,
+            "do_sample": False,
+            "pad_token_id": self.tokenizer.pad_token_id,
+            "eos_token_id": self.tokenizer.eos_token_id,
+            "max_length":max_length,
+            "num_beams":num_beams
+        }
+        
         for pos in range( 0, len(sliced_audios_features), batch_size ):
-            
-            # This is the code if self.model is the raw huggingface model
             input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(self.device)
-            generated_ids = self.model.generate( inputs = input_features, max_length = max_length)
-            generated_text_batch = self.tokenizer.batch_decode(generated_ids,skip_special_tokens=True)
-            
+            generated_ids = self.model.generate( inputs = input_features,  
+                                                 decoder_input_ids = torch.LongTensor([ self.tokenizer.convert_tokens_to_ids( [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"] ) for _ in range( input_features.size(0) )]).to(self.device),
+                                                 **generation_kwargs
+                                               )
+            generated_text_batch = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
             generated_text_list += generated_text_batch
-            
-        ## convert generated text to on_offsets
-        on_offset_list_of_trial = {}
-        for count, generated_text in enumerate(generated_text_list):
-            trial_id, offset_time, _, duration = sliced_audios_features[count]
+        return generated_text_list
 
-            if trial_id not in on_offset_list_of_trial:
-                on_offset_list_of_trial[trial_id] = []            
 
-            on_offsets_clip = self.extract_segments( generated_text )
-            for item in on_offsets_clip:
-                item[0] += offset_time
-                item[1] += offset_time
-
-            on_offset_list_of_trial[trial_id].append( on_offsets_clip )
-        
-        ## merge (or concatenate) the on_offset of each trial separately
-        merged_on_offset_list_of_trial = {}
-        for trial_id in on_offset_list_of_trial:
-            merged_on_offset_list_of_trial[trial_id] = []
-            for on_offsets_clip in on_offset_list_of_trial[trial_id]:
-                
-                if len(merged_on_offset_list_of_trial[trial_id]) > 0 and \
-                   len(on_offsets_clip)>0 and \
-                   merged_on_offset_list_of_trial[trial_id][-1][1] == on_offsets_clip[0][0] and \
-                   merged_on_offset_list_of_trial[trial_id][-1][2] == on_offsets_clip[0][2]:
-                    
-                    merged_on_offset_list_of_trial[trial_id][-1][1] = on_offsets_clip[0][1]
-                    on_offsets_clip = on_offsets_clip[1:]
-                merged_on_offset_list_of_trial[trial_id] += on_offsets_clip
-        
-        
-        trials_results = []
-        for trial_id in merged_on_offset_list_of_trial:
-            for item in merged_on_offset_list_of_trial[trial_id]:
-                item[0] = max( 0, item[0] )
-                item[1] = min( item[1], len( audio ) / sr )
-                
-            merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
-            merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] >= min_segment_length ]
-        
-            pred_onsets, pred_offsets, pred_clusters = [], [], []
-            for item in merged_on_offset_list_of_trial[trial_id]:            
-                pred_onsets.append(item[0])
-                pred_offsets.append(item[1])
-                pred_clusters.append(item[2])
-        
-            trials_results.append(  {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) } )
-        
-        if num_trials == 1:
-            final_prediction = trials_results[0]
-        else:
-            min_samples = max( 2, int(np.ceil( num_trials * 0.5 )) )
-            final_prediction = self.concolidate_trials( trials_results, eps, min_samples)
-            
-        ##formating the final prediction
-        final_prediction["onset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["onset"] ]
-        final_prediction["offset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["offset"] ]
-        
-        return final_prediction
-            
-        
-
-"""
-WhisperSegmenterFast differs from WhisperSegmenter in
-1. the init function
-2. the text generation part in the segment function
-3. WhisperSegmenterFast does not need the function update_cluster_codebook, because it is not used for training with new data.
-"""    
-    
 class WhisperSegmenterFast(SegmenterBase):
-    def __init__(self, model_path, device="cuda", compute_type = "float16" ):
+    def __init__(self, model_path, device=None, ignore_cache = False ):
         super().__init__()
         
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
         if device == "cpu":
             compute_type = "float32"
+        else:
+            compute_type = "float16"
+
+        model_path = download_model( model_path, ignore_cache = ignore_cache )
         
         self.model = ctranslate2.models.Whisper(model_path, device = device, compute_type = compute_type)
-        self.feature_extractor = WhisperFeatureExtractor.from_pretrained( model_path+"/hf_model" )
         self.tokenizer = WhisperTokenizer.from_pretrained(model_path+"/hf_model", language = "english" )
         
         model_config = json.load(open(model_path+"/hf_model"+"/config.json"))
-         
-
-        self.sr = model_config["sr"]
-        self.clip_duration = model_config["clip_duration"]
-        self.timestamp_precision = model_config["timestamp_precision"]
-        self.timestamp_format = model_config["timestamp_format"]
-        self.precision_bits = int(re.findall( "\%\.(\d)f", self.timestamp_format)[0])
-        self.input_features_length = int(self.clip_duration/ (self.feature_extractor.hop_length / self.sr))
-
+                
+        self.total_spec_columns = model_config["total_spec_columns"]
         self.cluster_codebook = model_config["cluster_codebook"]
         self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
             
-        
-    @torch.no_grad()
-    def segment( self, audio, num_trials = 3, min_segment_length = 0.02,
-                       voting_time_step = 1.0, voting_precision = 0.001, 
-                       batch_size = 16, max_length = 448,
-                       eps = 0.02,  ## for DBSCAN clustering
-               ):
-        
 
-        clip_duration = self.clip_duration
-        sr = self.sr
-        
-        voting_precision = min( voting_precision, self.timestamp_precision )
-        
-        max_num_padding_samples = int( clip_duration * sr )
-        audio_left_pad = np.zeros( max_num_padding_samples, dtype = np.float32 )
-        audio_clip_length = int(clip_duration * sr)
-        
-        sliced_audios_features = []
-        for trial_id in range(num_trials):            
-            
-            padding_time = np.round( clip_duration * trial_id / num_trials / self.timestamp_precision ) * self.timestamp_precision
-            num_padding_samples = int( padding_time * sr )
-                        
-            audio_padded = np.concatenate( [ audio_left_pad[ len(audio_left_pad) - num_padding_samples: ],
-                                             audio
-                                           ], axis = 0 )
-            
-            ## This loop must be executed once even for zero length audio
-            for pos in range( 0, max(len(audio_padded), 1), audio_clip_length ):
-                offset_time = pos / sr - padding_time
-                
-                audio_clip = audio_padded[pos:pos+audio_clip_length]
-                audio_clip_padded = np.concatenate([ audio_clip, np.zeros( audio_clip_length - len(audio_clip), dtype = np.float32 ) ], axis = 0 )
-            
-                input_features = self.feature_extractor(audio_clip_padded, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
-                feature_padding_value = input_features.min() if input_features.shape[1] != 0 else -1.0
-                input_features = input_features[:,:self.input_features_length] 
-                input_features = np.concatenate([ 
-                                    input_features, 
-                                    feature_padding_value * np.ones( ( input_features.shape[0], self.input_features_length - input_features.shape[1]) )
-                                  ], axis = 1 ).astype(np.float32)
-                
-                sliced_audios_features.append( ( trial_id, offset_time, input_features, len(audio_clip)/sr ) )
-                        
-                
-        ### the generation part
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams):
         generated_text_list = []
         for pos in range( 0, len(sliced_audios_features), batch_size ):
             
             """ 
             This is the code if self.model is the converted ctranslate model
-            
             """
             sliced_audios_features_batch = sliced_audios_features[pos:pos+batch_size]
             actual_batch_size = len(sliced_audios_features_batch)
@@ -636,7 +571,8 @@ class WhisperSegmenterFast(SegmenterBase):
                 [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"]
             )
             ## the ctranslate converted model typically requires a larger max length than the one required by the original huggingface model, so we set max_length to a large value.
-            model_output = self.model.generate(features, [ prompt for _ in range(actual_batch_size) ], max_length = max_length )
+            model_output = self.model.generate(features, [ prompt for _ in range(actual_batch_size) ], 
+                                                 max_length = max_length, beam_size = num_beams )
             generated_text_batch = []
             for item in model_output:
                 try:
@@ -646,63 +582,7 @@ class WhisperSegmenterFast(SegmenterBase):
                 generated_text_batch.append(gen_text)
                 
             generated_text_list += generated_text_batch
-            
-        ## convert generated text to on_offsets
-        on_offset_list_of_trial = {}
-        for count, generated_text in enumerate(generated_text_list):
-            trial_id, offset_time, _, duration = sliced_audios_features[count]
-
-            if trial_id not in on_offset_list_of_trial:
-                on_offset_list_of_trial[trial_id] = []            
-
-            on_offsets_clip = self.extract_segments( generated_text )
-            for item in on_offsets_clip:
-                item[0] += offset_time
-                item[1] += offset_time
-
-            on_offset_list_of_trial[trial_id].append( on_offsets_clip )
         
-        ## merge (or concatenate) the on_offset of each trial separately
-        merged_on_offset_list_of_trial = {}
-        for trial_id in on_offset_list_of_trial:
-            merged_on_offset_list_of_trial[trial_id] = []
-            for on_offsets_clip in on_offset_list_of_trial[trial_id]:
-                
-                if len(merged_on_offset_list_of_trial[trial_id]) > 0 and \
-                   len(on_offsets_clip)>0 and \
-                   merged_on_offset_list_of_trial[trial_id][-1][1] == on_offsets_clip[0][0] and \
-                   merged_on_offset_list_of_trial[trial_id][-1][2] == on_offsets_clip[0][2]:
-                    
-                    merged_on_offset_list_of_trial[trial_id][-1][1] = on_offsets_clip[0][1]
-                    on_offsets_clip = on_offsets_clip[1:]
-                merged_on_offset_list_of_trial[trial_id] += on_offsets_clip
-        
-
-        trials_results = []
-        for trial_id in merged_on_offset_list_of_trial:
-            for item in merged_on_offset_list_of_trial[trial_id]:
-                item[0] = max( 0, item[0] )
-                item[1] = min( item[1], len( audio ) / sr )
-            
-            merged_on_offset_list_of_trial[trial_id] = sorted( merged_on_offset_list_of_trial[trial_id], key = lambda x:x[0] )
-            merged_on_offset_list_of_trial[trial_id] = [ item for item in merged_on_offset_list_of_trial[trial_id] if item[1] - item[0] >= min_segment_length ]
-        
-            pred_onsets, pred_offsets, pred_clusters = [], [], []
-            for item in merged_on_offset_list_of_trial[trial_id]:            
-                pred_onsets.append(item[0])
-                pred_offsets.append(item[1])
-                pred_clusters.append(item[2])
-        
-            trials_results.append(  {"onset":list(pred_onsets), "offset":list(pred_offsets), "cluster":list(pred_clusters) } )
-        
-        if num_trials == 1:
-            final_prediction = trials_results[0]
-        else:
-            min_samples = max( 2, int(np.ceil( num_trials * 0.5 )) )
-            final_prediction = self.concolidate_trials( trials_results, eps, min_samples)
-            
-        ##formating the final prediction
-        final_prediction["onset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["onset"] ]
-        final_prediction["offset"] = [ float(np.round(t, self.precision_bits)) for t in final_prediction["offset"] ]
-            
-        return final_prediction
+        return generated_text_list
+    
+    

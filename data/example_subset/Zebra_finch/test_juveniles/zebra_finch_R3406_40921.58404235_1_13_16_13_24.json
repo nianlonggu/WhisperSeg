@@ -1,0 +1,1 @@
+{"onset": [2.72253966331482, 5.183855056762695], "offset": [2.792199529707432, 5.270929887890816], "cluster": ["zebra_finch_0", "zebra_finch_0"], "species": "zebra_finch", "sr": 32000, "min_frequency": 0, "spec_time_step": 0.0025, "min_segment_length": 0.01, "tolerance": 0.01, "time_per_frame_for_scoring": 0.001, "eps": 0.02}
