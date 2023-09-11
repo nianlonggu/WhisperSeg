@@ -20,6 +20,8 @@ Please refer to the following documents (by clicking) for the complete pipeline 
 2. [Model Training](docs/ModelTraining.md)
 3. [Evaluation](docs/Evaluation.md)
 
+We also prepared a jupyter notebook with a complete walkthrough of WhisperSeg finetuning, including data processing, training, and evaluation. This jupyter notebook is available at [docs/WhisperSeg_Training_Pipeline.ipynb](docs/WhisperSeg_Training_Pipeline.ipynb), and it is directly runnable at Google Colab: <a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Training_Pipeline.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
 ## Voice Activity Detection Demo 
 We demonstrate here using a WhisperSeg trained on multi-species data to segment the audio files of different species.
 
