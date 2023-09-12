@@ -235,7 +235,7 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 ![vis](assets/res_human.gif)
 
 ## Citation
-Our paper is under review. The citation information will be updated soon.
+Our paper is under review. The citation information will be updated in the future.
 
 ## Contact
 Nianlong Gu
