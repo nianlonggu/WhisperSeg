@@ -14,7 +14,7 @@ conda install -c pypi cudnn -y
 ```
 
 ## Documentation
-Please refer to the following documents (by clicking) for the complete pipeline of training WhisperSeg, including 1) dataset processing, 2) model training and 3) model evaluation.
+Please refer to the following documents for the complete pipeline of training WhisperSeg, including 1) dataset processing, 2) model training and 3) model evaluation.
 
 1. [Dataset Processing](docs/DatasetProcessing.md)
 2. [Model Training](docs/ModelTraining.md)
