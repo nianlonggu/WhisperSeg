@@ -33,6 +33,9 @@ def download_model( model_path, ignore_cache = False ):
         return model_path
     ## Suppose that this model path is a model name stored at huggingface 
     cache_dir = os.path.expanduser(os.getenv("WHISPERSEG_MODEL_CACHE", "~/.cache/whisperseg_models/"))
+
+    os.makedirs(cache_dir, exist_ok=True )
+    
     model_folder_name = hashlib.sha256( model_path.encode()).hexdigest() 
 
     local_model_path = os.path.join( cache_dir, model_folder_name )  
