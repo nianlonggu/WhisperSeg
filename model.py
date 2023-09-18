@@ -44,6 +44,7 @@ def download_model( model_path, ignore_cache = False ):
             shutil.rmtree( local_model_path )
 
     if not os.path.exists(local_model_path) or len(os.listdir(local_model_path)) == 0:
+        os.makedirs(local_model_path, exist_ok=True )
         snapshot_download(model_path, local_dir = local_model_path )
     return local_model_path
 
