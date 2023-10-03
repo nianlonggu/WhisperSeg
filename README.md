@@ -19,6 +19,8 @@ Please refer to the following documents for the complete pipeline of training Wh
 1. [Dataset Processing](docs/DatasetProcessing.md)
 2. [Model Training](docs/ModelTraining.md)
 3. [Evaluation](docs/Evaluation.md)
+4. [Run WhisperSeg as a Web Service](docs/RunWhisperSegAsWebService.md)  
+   This allows running WhisperSeg on a Web server, and call the segmentation service from any client of different environments, such as python or MatLab. The best way to incorporate WhisperSeg into your original workflow.
 
 We have also prepared a Jupyter notebook that provides a comprehensive walkthrough of WhisperSeg finetuning. This includes steps for data processing, training, and evaluation. You can access this notebook at [docs/WhisperSeg_Training_Pipeline.ipynb](docs/WhisperSeg_Training_Pipeline.ipynb), or run it in Google Colab: <a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Training_Pipeline.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 

@@ -13,3 +13,5 @@ librosa
 ipywidgets
 matplotlib
 moviepy
+flask
+flask-cors
