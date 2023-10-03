@@ -1,6 +1,6 @@
 # Positive Transfer Of The Whisper Speech Transformer To Human And Animal Voice Activity Detection
 We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Automatic Speech Recognition (ASR) for both human and animal Voice Activity Detection (VAD). For more details, please refer to our paper:
-> [**Positive Transfer of the Whisper Speech Transformer to Human and Animal Voice Activity Detection**]()
+> [**Positive Transfer of the Whisper Speech Transformer to Human and Animal Voice Activity Detection**](https://doi.org/10.1101/2023.09.30.560270)
 > 
 > Nianlong Gu, Kanghwi Lee, Maris Basha, Sumit Kumar Ram, Guanghao You, Richard H. R. Hahnloser <br>
 > University of Zurich and ETH Zurich
@@ -235,7 +235,21 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 ![vis](assets/res_human.gif)
 
 ## Citation
-Our paper is under review. The citation information will be updated in the future.
+When using our code or models for your work, please cite the following paper:
+```
+@article {Gu2023.09.30.560270,
+	author = {Nianlong Gu and Kanghwi Lee and Maris Basha and Sumit Kumar Ram and Guanghao You and Richard Hahnloser},
+	title = {Positive Transfer of the Whisper Speech Transformer to Human and Animal Voice Activity Detection},
+	elocation-id = {2023.09.30.560270},
+	year = {2023},
+	doi = {10.1101/2023.09.30.560270},
+	publisher = {Cold Spring Harbor Laboratory},
+	abstract = {This paper introduces WhisperSeg, utilizing the Whisper Transformer pre-trained for Automatic Speech Recognition (ASR) for human and animal Voice Activity Detection (VAD). Contrary to traditional methods that detect human voice or animal vocalizations from a short audio frame and rely on careful threshold selection, WhisperSeg processes entire spectrograms of long audio and generates plain text representations of onset, offset, and type of voice activity. Processing a longer audio context with a larger network greatly improves detection accuracy from few labeled examples. We further demonstrate a positive transfer of detection performance to new animal species, making our approach viable in the data-scarce multi-species setting.Competing Interest StatementThe authors have declared no competing interest.},
+	URL = {https://www.biorxiv.org/content/early/2023/10/02/2023.09.30.560270},
+	eprint = {https://www.biorxiv.org/content/early/2023/10/02/2023.09.30.560270.full.pdf},
+	journal = {bioRxiv}
+}
+```
 
 ## Contact
 Nianlong Gu
