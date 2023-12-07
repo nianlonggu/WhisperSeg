@@ -9,7 +9,15 @@ We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Au
 ```bash
 conda create -n wseg python=3.10 -y
 conda activate wseg
+```
+On Linux
+```bash
 pip install -r requirements.txt
+conda install -c pypi cudnn -y
+```
+On Windows (change from bitsandbytes to bitsandbytes-windows to avoid the error caused by bitsandbytes)
+```
+pip install -r requirements_windows.txt
 conda install -c pypi cudnn -y
 ```
 
