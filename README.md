@@ -46,7 +46,9 @@ segmenter = WhisperSegmenter( "nccratliri/whisperseg-large-ms", device="cuda" )
 ```
 #### CTranslate2 version for faster inference
 
-Alternatively, we provided a [CTranslate2](https://github.com/OpenNMT/CTranslate2) converted version, which enables 4x faster inference speed. To use this converted model, we need to import the "WhisperSegmenterFast" module.
+Alternatively, we provided a [CTranslate2](https://github.com/OpenNMT/CTranslate2) converted version, which enables 4x faster inference speed. 
+
+To use the CTranslate2 converted model (with checkpoint name ended with "-ct2"), we need to import the "**WhisperSegmenterFast**" module.
 
 
 ```python
