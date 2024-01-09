@@ -5,6 +5,8 @@ We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Au
 > Nianlong Gu, Kanghwi Lee, Maris Basha, Sumit Kumar Ram, Guanghao You, Richard H. R. Hahnloser <br>
 > University of Zurich and ETH Zurich
 
+*Accepted to the 2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP 2024)*
+
 ## Install Environment
 ```bash
 conda create -n wseg python=3.10 -y
