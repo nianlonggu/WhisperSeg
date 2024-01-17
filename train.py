@@ -16,29 +16,40 @@ from model import *
 from datautils import *
 import subprocess
 
-from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers import AdamW, get_linear_schedule_with_warmup, set_seed
 
-def train_iteration(batch):
+# def train_iteration(batch):
+#     for key in batch:
+#         batch[key] = batch[key].to(device)
+    
+#     optimizer.zero_grad()
+#     with torch.amp.autocast(device_type="cuda", dtype=torch.float16):   
+#         model_out = model( **batch )
+#         loss = model_out.loss.mean()
+#     scaler.scale(loss).backward()
+#     scaler.step(optimizer)
+#     # optimizer.step()
+#     scaler.update()
+    
+#     """ 
+#     # normal version without float16 speedup
+#     optimizer.zero_grad()
+#     model_out = model( **batch )
+#     loss = model_out.loss.mean()
+#     loss.backward()    
+#     optimizer.step()
+#     """
+#     return loss.item()
+
+def train_iteration(batch, accumulation_steps):
     for key in batch:
         batch[key] = batch[key].to(device)
     
     optimizer.zero_grad()
     with torch.amp.autocast(device_type="cuda", dtype=torch.float16):   
         model_out = model( **batch )
-        loss = model_out.loss.mean()
+        loss = model_out.loss.mean() / accumulation_steps
     scaler.scale(loss).backward()
-    scaler.step(optimizer)
-    # optimizer.step()
-    scaler.update()
-    
-    """ 
-    # normal version without float16 speedup
-    optimizer.zero_grad()
-    model_out = model( **batch )
-    loss = model_out.loss.mean()
-    loss.backward()    
-    optimizer.step()
-    """
     return loss.item()
 
 def evaluate( audio_list, label_list, segmenter, batch_size, max_length, num_trials, consolidation_method = "clustering", num_beams=4, target_cluster = None ):
@@ -116,8 +127,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type = int, default = 4 )
     parser.add_argument("--learning_rate", type = float, default = 3e-6 )
     parser.add_argument("--lr_schedule", default = "linear" )
+    parser.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Number of steps to accumulate gradients before updating model parameters")
     parser.add_argument("--max_to_keep", type = int, default = -1 )
-    parser.add_argument("--seed", type = int, default = 66100 )
+    parser.add_argument("--seed", type = int, default = 66102 )
     parser.add_argument("--weight_decay", type = float, default = 0.01 )
     parser.add_argument("--warmup_steps", type = int, default = 100 )
     parser.add_argument("--freeze_encoder", type = int, default = 0 )
@@ -126,7 +138,10 @@ if __name__ == "__main__":
     parser.add_argument("--clear_cluster_codebook", type = int, help="set the pretrained model's cluster_codebook to empty dict. This is used when we train the segmenter on a complete new dataset. Set this to 0 if you just want to slighlt finetune the model with some additional data with the same cluster naming rule.", default = 0 )
     
     args = parser.parse_args()
-
+    
+    if args.seed is not None:
+        set_seed(args.seed)  
+    
     wandb.init( project = args.project, name = args.run_name )
     wandb.define_metric("current_step")
     wandb.define_metric( "epoch", step_metric="current_step")
@@ -135,9 +150,6 @@ if __name__ == "__main__":
     wandb.define_metric( "validate/score", step_metric="current_step")
     wandb.define_metric( "validate/segment_score", step_metric="current_step")
     wandb.define_metric( "validate/frame_score", step_metric="current_step")
-
-    if args.seed is not None:
-        np.random.seed(args.seed)  
         
     if args.val_ratio == 0.0:
         args.validate_every = None
@@ -151,7 +163,6 @@ if __name__ == "__main__":
     device = torch.device(  "cuda:%d"%( args.gpu_list[0] ) if torch.cuda.is_available() else "cpu" )
 
     model, tokenizer = load_model( args.initial_model_path, args.total_spec_columns, args.dropout)
-
     model = model.to(device)
     
     if args.freeze_encoder:
@@ -169,7 +180,6 @@ if __name__ == "__main__":
     optimizer = AdamW(optimizer_grouped_parameters, lr = args.learning_rate )
     
     model = nn.DataParallel( model, args.gpu_list )
-
     segmenter = WhisperSegmenter( model = model, tokenizer = tokenizer )
 
     if args.clear_cluster_codebook:
@@ -193,8 +203,7 @@ if __name__ == "__main__":
                                          args.total_spec_columns, model.module.config.species_codebook  )
 
     training_dataloader = DataLoader( training_dataset, batch_size = args.batch_size , shuffle = True , 
-                                             worker_init_fn = lambda x:[np.random.seed( int( time.time() )  + x ),  
-                                                                    torch.manual_seed(int( time.time() ) + x) ] , 
+                                             worker_init_fn = lambda x:set_seed( np.random.get_state()[1][0] + x ), 
                                              num_workers = args.num_workers , drop_last= True,
                                              pin_memory = False
                                            )
@@ -203,12 +212,11 @@ if __name__ == "__main__":
         print("Error: Too few examples (less than a batch) for training! Exit!")
         sys.exit(1)
     
-
     if args.max_num_iterations is not None and args.max_num_iterations > 0:
-        args.max_num_epochs = int(np.ceil( args.max_num_iterations / len( training_dataloader )  ))
+        args.max_num_epochs = int(np.ceil( args.max_num_iterations * args.gradient_accumulation_steps / len( training_dataloader )  ))
     else:
         assert args.max_num_epochs is not None and args.max_num_epochs > 0
-        args.max_num_iterations = len( training_dataloader ) * args.max_num_epochs
+        args.max_num_iterations = int(len( training_dataloader ) / args.gradient_accumulation_steps * args.max_num_epochs)
                 
     if args.lr_schedule == "linear":
         scheduler = get_linear_schedule_with_warmup(
@@ -224,67 +232,82 @@ if __name__ == "__main__":
     eary_stop = False
     current_step = 0
 
+    accumulation_counter = 0
+    training_accumulation_loss = 0
+    
     for epoch in range(args.max_num_epochs + 1):  # This +1 is to ensure current_step can reach args.max_num_iterations
-        for count, batch in enumerate( tqdm( training_dataloader ) ):
-            training_loss_value_list.append( train_iteration(batch) )
+        pbar = tqdm(total=len(training_dataloader)//args.gradient_accumulation_steps)
+        for count, batch in enumerate(  training_dataloader  ):
+            loss = train_iteration(batch, args.gradient_accumulation_steps)
+            accumulation_counter += 1
+            training_accumulation_loss += loss
             
-            if scheduler is not None:
-                scheduler.step()
+            if accumulation_counter % args.gradient_accumulation_steps == 0 or count == len(training_dataloader) - 1 :
+                scaler.step(optimizer)
+                scaler.update()
+                if scheduler is not None:
+                    scheduler.step()
+                optimizer.zero_grad()
+                training_loss_value_list.append( training_accumulation_loss )
                 
-            current_step += 1
-
-            if current_step % args.print_every == 0:
-                print("Epoch: %d, current_step: %d, learning rate: %f, Loss: %.4f"%( epoch, current_step, get_lr(optimizer)[0], np.mean(training_loss_value_list)) )
-                wandb.log(
-                    {
-                        "current_step":current_step,
-                        "train/learning_rate":get_lr(optimizer)[0],
-                        "train/loss":np.mean(training_loss_value_list),
-                        "epoch": epoch + count / len(training_dataloader)
-                    }
-                )
-                
-                training_loss_value_list = [] 
-
-            if ( args.validate_every is not None and current_step % args.validate_every == 0 ) or \
-                ( args.validate_per_epoch and count == len(training_dataloader) - 1 ):
-                print("Start validation ...")
-                model.eval()
-                ## in the validation set, set the num_trails to 1
-                eval_res = evaluate( audio_list_val, label_list_val, segmenter, args.batch_size, args.max_length, num_trials =1, consolidation_method = None, num_beams=1, target_cluster = None )
-         
-                print("Epoch: %d, current_step: %d, validation segment F1 score: %.2f, frame F1 score: %.2f"%( epoch, current_step, 
-                                                                      eval_res["segment_wise"][-1], eval_res["frame_wise"][-1] ))
-                wandb.log(
-                    {
-                        "current_step":current_step,
-                        "validate/score": ( eval_res["segment_wise"][-1] + eval_res["frame_wise"][-1] ) * 0.5,
-                        "validate/segment_score": eval_res["segment_wise"][-1],
-                        "validate/frame_score": eval_res["frame_wise"][-1]
-                    }
-                )    
-                val_score_history.append( ( current_step, ( eval_res["segment_wise"][-1] + eval_res["frame_wise"][-1] ) * 0.5 ) )
-                
-                model.train()
+                accumulation_counter = 0
+                training_accumulation_loss = 0
             
-            if ( args.save_every is not None and current_step % args.save_every == 0 ) or \
-               ( args.save_per_epoch and count == len(training_dataloader) - 1 ):
-                model.eval()
-                save_model( model, tokenizer, current_step, args.model_folder, args.max_to_keep )
-                model.train()
+                current_step += 1
+                pbar.update(1)
 
-            if current_step >= 0.5 * args.max_num_iterations: ## training has been half-way done
-                ## validation score keep decreasing for 2 validation steps
-                if len( val_score_history ) >= 3 and \
-                   val_score_history[-1][1] < val_score_history[-2][1] and \
-                   val_score_history[-2][1] < val_score_history[-3][1]:
-                    eary_stop = True
+                if current_step % args.print_every == 0:
+                    print("Epoch: %d, current_step: %d, learning rate: %f, Loss: %.4f"%( epoch, current_step, get_lr(optimizer)[0], np.mean(training_loss_value_list)) )
+                    wandb.log(
+                        {
+                            "current_step":current_step,
+                            "train/learning_rate":get_lr(optimizer)[0],
+                            "train/loss":np.mean(training_loss_value_list),
+                            "epoch": epoch + count / len(training_dataloader)
+                        }
+                    )
+                    
+                    training_loss_value_list = [] 
+
+                if ( args.validate_every is not None and current_step % args.validate_every == 0 ) or \
+                    ( args.validate_per_epoch and count == len(training_dataloader) - 1 ):
+                    print("Start validation ...")
+                    model.eval()
+                    ## in the validation set, set the num_trails to 1
+                    eval_res = evaluate( audio_list_val, label_list_val, segmenter, args.batch_size, args.max_length, num_trials =1, consolidation_method = None, num_beams=1, target_cluster = None )
             
-            if current_step >= args.max_num_iterations or eary_stop :
-                if not os.path.exists( args.model_folder+"/checkpoint-%d"%(current_step) ):
+                    print("Epoch: %d, current_step: %d, validation segment F1 score: %.2f, frame F1 score: %.2f"%( epoch, current_step, 
+                                                                        eval_res["segment_wise"][-1], eval_res["frame_wise"][-1] ))
+                    wandb.log(
+                        {
+                            "current_step":current_step,
+                            "validate/score": ( eval_res["segment_wise"][-1] + eval_res["frame_wise"][-1] ) * 0.5,
+                            "validate/segment_score": eval_res["segment_wise"][-1],
+                            "validate/frame_score": eval_res["frame_wise"][-1]
+                        }
+                    )    
+                    val_score_history.append( ( current_step, ( eval_res["segment_wise"][-1] + eval_res["frame_wise"][-1] ) * 0.5 ) )
+                    
+                    model.train()
+                
+                if ( args.save_every is not None and current_step % args.save_every == 0 ) or \
+                ( args.save_per_epoch and count == len(training_dataloader) - 1 ):
                     model.eval()
                     save_model( model, tokenizer, current_step, args.model_folder, args.max_to_keep )
-                break
+                    model.train()
+
+                if current_step >= 0.5 * args.max_num_iterations: ## training has been half-way done
+                    ## validation score keep decreasing for 2 validation steps
+                    if len( val_score_history ) >= 3 and \
+                    val_score_history[-1][1] < val_score_history[-2][1] and \
+                    val_score_history[-2][1] < val_score_history[-3][1]:
+                        eary_stop = True
+                
+                if current_step >= args.max_num_iterations or eary_stop :
+                    if not os.path.exists( args.model_folder+"/checkpoint-%d"%(current_step) ):
+                        model.eval()
+                        save_model( model, tokenizer, current_step, args.model_folder, args.max_to_keep )
+                    break
 
         if current_step >= args.max_num_iterations or eary_stop :
             break   

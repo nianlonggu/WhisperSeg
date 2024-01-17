@@ -101,7 +101,7 @@ def load_model( initial_model_path, total_spec_columns, dropout = 0.0):
 
     ## do not change nccratliri/whisper-large to openai/whisper-large, since the tokenizer in openai/whisper-large has changed its vocabulary
     tokenizer = WhisperTokenizer.from_pretrained("nccratliri/whisper-large", language = "english" )
-    tokenizer.add_tokens( ["<|%d|>"%(i) for i in range( total_spec_columns + 1)], special_tokens=True  )
+    tokenizer.add_tokens( ["<|%d|>"%(i) for i in range(0, total_spec_columns + 1)], special_tokens=True  )
     tokenizer.add_tokens( [ v for k, v in model.config.species_codebook.items() ], special_tokens=True )
         
     return model, tokenizer

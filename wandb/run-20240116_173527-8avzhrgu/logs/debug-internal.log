@@ -1,0 +1,566 @@
+2024-01-16 17:35:27,870 INFO    StreamThr :427217 [internal.py:wandb_internal():86] W&B internal server running at pid: 427217, started at: 2024-01-16 17:35:27.869842
+2024-01-16 17:35:27,873 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status
+2024-01-16 17:35:27,876 INFO    WriterThread:427217 [datastore.py:open_for_write():87] open: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/run-8avzhrgu.wandb
+2024-01-16 17:35:27,876 DEBUG   SenderThread:427217 [sender.py:send():382] send: header
+2024-01-16 17:35:27,876 DEBUG   SenderThread:427217 [sender.py:send():382] send: run
+2024-01-16 17:35:28,309 INFO    SenderThread:427217 [dir_watcher.py:__init__():211] watching files in: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files
+2024-01-16 17:35:28,310 INFO    SenderThread:427217 [sender.py:_start_run_threads():1136] run started: 8avzhrgu with start time 1705444527.869141
+2024-01-16 17:35:28,315 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: check_version
+2024-01-16 17:35:28,315 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: check_version
+2024-01-16 17:35:28,438 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: run_start
+2024-01-16 17:35:28,444 DEBUG   HandlerThread:427217 [system_info.py:__init__():27] System info init
+2024-01-16 17:35:28,444 DEBUG   HandlerThread:427217 [system_info.py:__init__():42] System info init done
+2024-01-16 17:35:28,444 INFO    HandlerThread:427217 [system_monitor.py:start():194] Starting system monitor
+2024-01-16 17:35:28,444 INFO    SystemMonitor:427217 [system_monitor.py:_start():158] Starting system asset monitoring threads
+2024-01-16 17:35:28,445 INFO    HandlerThread:427217 [system_monitor.py:probe():214] Collecting system info
+2024-01-16 17:35:28,445 INFO    SystemMonitor:427217 [interfaces.py:start():190] Started cpu monitoring
+2024-01-16 17:35:28,446 INFO    SystemMonitor:427217 [interfaces.py:start():190] Started disk monitoring
+2024-01-16 17:35:28,447 INFO    SystemMonitor:427217 [interfaces.py:start():190] Started gpu monitoring
+2024-01-16 17:35:28,449 INFO    SystemMonitor:427217 [interfaces.py:start():190] Started memory monitoring
+2024-01-16 17:35:28,451 INFO    SystemMonitor:427217 [interfaces.py:start():190] Started network monitoring
+2024-01-16 17:35:28,529 DEBUG   HandlerThread:427217 [system_info.py:probe():151] Probing system
+2024-01-16 17:35:28,531 DEBUG   HandlerThread:427217 [system_info.py:_probe_git():136] Probing git
+2024-01-16 17:35:28,539 DEBUG   HandlerThread:427217 [system_info.py:_probe_git():144] Probing git done
+2024-01-16 17:35:28,539 DEBUG   HandlerThread:427217 [system_info.py:probe():199] Probing system done
+2024-01-16 17:35:28,539 DEBUG   HandlerThread:427217 [system_monitor.py:probe():223] {'os': 'Linux-5.15.0-69-generic-x86_64-with-glibc2.35', 'python': '3.10.13', 'heartbeatAt': '2024-01-16T22:35:28.529698', 'startedAt': '2024-01-16T22:35:27.865648', 'docker': None, 'cuda': None, 'args': ('--initial_model_path', 'nccratliri/whisperseg-large-ms', '--model_folder', 'model/whisperseg-large-meerkat/', '--train_dataset_folder', 'data/datasets/meerkat/data/train_subset/', '--gpu_list', '0', '--max_num_iterations', '500'), 'state': 'running', 'program': '/mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/train.py', 'codePathLocal': 'train.py', 'codePath': 'train.py', 'git': {'remote': 'https://github.com/nianlonggu/WhisperSeg.git', 'commit': '306b289d5389ceab3fe1db4b886c57790aa87b09'}, 'email': 'nianlonggu@gmail.com', 'root': '/mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg', 'host': 'zfbrain01', 'username': 'nianlong', 'executable': '/home/nianlong/miniconda3/envs/wseg/bin/python', 'cpu_count': 128, 'cpu_count_logical': 256, 'cpu_freq': {'current': 1982.7589140625, 'min': 1500.0, 'max': 2600.0}, 'cpu_freq_per_core': [{'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 3295.592, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2000.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 2600.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}, {'current': 1500.0, 'min': 1500.0, 'max': 2600.0}], 'disk': {'/': {'total': 468.2821350097656, 'used': 108.74462890625}}, 'gpu': 'Quadro RTX 8000', 'gpu_count': 1, 'gpu_devices': [{'name': 'Quadro RTX 8000', 'memory_total': 51539607552}], 'memory': {'total': 2003.8734855651855}}
+2024-01-16 17:35:28,539 INFO    HandlerThread:427217 [system_monitor.py:probe():224] Finished collecting system info
+2024-01-16 17:35:28,540 INFO    HandlerThread:427217 [system_monitor.py:probe():227] Publishing system info
+2024-01-16 17:35:28,540 DEBUG   HandlerThread:427217 [system_info.py:_save_conda():208] Saving list of conda packages installed into the current environment
+2024-01-16 17:35:29,311 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_created():271] file/dir created: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/conda-environment.yaml
+2024-01-16 17:35:31,310 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/conda-environment.yaml
+2024-01-16 17:35:31,426 DEBUG   HandlerThread:427217 [system_info.py:_save_conda():220] Saving conda packages done
+2024-01-16 17:35:31,428 INFO    HandlerThread:427217 [system_monitor.py:probe():229] Finished publishing system info
+2024-01-16 17:35:31,431 DEBUG   SenderThread:427217 [sender.py:send():382] send: files
+2024-01-16 17:35:31,431 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-metadata.json with policy now
+2024-01-16 17:35:31,437 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: python_packages
+2024-01-16 17:35:31,437 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: python_packages
+2024-01-16 17:35:31,440 DEBUG   SenderThread:427217 [sender.py:send():382] send: telemetry
+2024-01-16 17:35:31,440 DEBUG   SenderThread:427217 [sender.py:send():382] send: metric
+2024-01-16 17:35:31,481 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:35:31,481 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:35:31,482 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:35:31,702 DEBUG   SenderThread:427217 [sender.py:send():382] send: telemetry
+2024-01-16 17:35:31,702 DEBUG   SenderThread:427217 [sender.py:send():382] send: metric
+2024-01-16 17:35:31,702 DEBUG   SenderThread:427217 [sender.py:send():382] send: metric
+2024-01-16 17:35:31,702 DEBUG   SenderThread:427217 [sender.py:send():382] send: metric
+2024-01-16 17:35:31,702 DEBUG   SenderThread:427217 [sender.py:send():382] send: metric
+2024-01-16 17:35:31,703 DEBUG   SenderThread:427217 [sender.py:send():382] send: metric
+2024-01-16 17:35:31,703 DEBUG   SenderThread:427217 [sender.py:send():382] send: metric
+2024-01-16 17:35:31,966 INFO    wandb-upload_0:427217 [upload_job.py:push():131] Uploaded file /tmp/tmpmc5z01dpwandb/mzdt33e8-wandb-metadata.json
+2024-01-16 17:35:32,310 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_created():271] file/dir created: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-metadata.json
+2024-01-16 17:35:32,311 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_created():271] file/dir created: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/requirements.txt
+2024-01-16 17:35:33,703 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:35:38,704 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:35:43,706 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:35:46,315 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_created():271] file/dir created: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:35:46,438 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:35:46,439 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:35:46,442 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:35:48,315 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:35:48,731 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:35:49,316 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:35:52,316 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:35:53,782 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:35:54,317 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:35:56,318 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:35:58,318 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:35:59,477 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:00,319 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/config.yaml
+2024-01-16 17:36:00,319 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:01,439 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:36:01,440 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:36:01,442 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:36:02,320 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:04,320 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:05,450 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:06,321 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:08,322 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:10,322 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:10,538 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:12,323 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:14,324 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:15,873 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:16,325 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:16,441 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:36:16,441 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:36:16,481 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:36:18,326 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:20,326 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:21,679 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:22,327 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:24,328 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:26,328 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:27,011 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:28,329 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:28,452 DEBUG   SystemMonitor:427217 [system_monitor.py:_start():172] Starting system metrics aggregation loop
+2024-01-16 17:36:28,458 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:36:30,330 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:31,440 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:36:31,441 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:36:31,442 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:36:32,330 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:32,743 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:34,331 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:36,332 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:38,123 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:38,333 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:40,333 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:42,334 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:43,883 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:44,335 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:46,335 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:46,440 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:36:46,441 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:36:46,441 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:36:48,336 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:49,295 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:50,336 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:52,337 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:54,338 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:55,060 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:36:56,338 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:57,139 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: partial_history
+2024-01-16 17:36:57,140 DEBUG   SenderThread:427217 [sender.py:send():382] send: history
+2024-01-16 17:36:57,141 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: summary_record
+2024-01-16 17:36:57,141 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-01-16 17:36:57,339 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_created():271] file/dir created: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json
+2024-01-16 17:36:58,339 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:36:58,462 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:36:59,340 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:00,340 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:00,450 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:01,443 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:37:01,443 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:37:01,444 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:37:02,341 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:04,341 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:06,211 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:06,342 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:08,343 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:10,343 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:11,542 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:12,344 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:14,345 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:16,345 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:16,511 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:37:16,513 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:37:16,514 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:37:16,691 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:18,346 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:20,347 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:21,970 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:22,347 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:24,348 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:26,349 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:27,255 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:28,349 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:28,464 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:37:30,350 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:31,457 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:37:31,458 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:37:31,508 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:37:32,351 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:32,404 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:34,351 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:36,352 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:37,691 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:38,355 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:40,356 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:42,356 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:42,798 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:44,357 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:46,358 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:46,458 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:37:46,459 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:37:46,508 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:37:48,089 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:48,359 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:50,359 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:52,360 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:53,222 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:37:54,360 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:56,361 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:58,362 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:37:58,469 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:37:58,471 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:00,363 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:01,458 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:38:01,459 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:38:01,509 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:38:02,363 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:03,642 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:04,364 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:06,279 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: partial_history
+2024-01-16 17:38:06,280 DEBUG   SenderThread:427217 [sender.py:send():382] send: history
+2024-01-16 17:38:06,281 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: summary_record
+2024-01-16 17:38:06,282 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-01-16 17:38:06,365 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:06,365 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json
+2024-01-16 17:38:07,365 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:08,365 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:08,924 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:10,366 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:12,367 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:14,048 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:14,368 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:16,368 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:16,458 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:38:16,458 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:38:16,509 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:38:18,369 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:19,351 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:20,370 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:22,370 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:24,371 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:24,462 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:26,372 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:28,372 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:28,472 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:38:29,786 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:30,373 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:31,458 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:38:31,459 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:38:31,509 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:38:32,374 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:34,375 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:34,855 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:36,375 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:38,376 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:40,150 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:40,377 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:42,378 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:44,378 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:45,870 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:46,379 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:46,459 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:38:46,459 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:38:46,509 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:38:48,380 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:50,380 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:51,182 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:52,381 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:54,382 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:56,383 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:56,979 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:38:58,383 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:38:58,473 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:39:00,384 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:01,459 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:39:01,459 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:39:01,509 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:39:02,328 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:02,385 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:04,385 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:06,386 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:08,099 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:08,387 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:10,387 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:12,388 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:13,418 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:14,389 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:15,392 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: partial_history
+2024-01-16 17:39:15,394 DEBUG   SenderThread:427217 [sender.py:send():382] send: history
+2024-01-16 17:39:15,394 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: summary_record
+2024-01-16 17:39:15,395 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-01-16 17:39:16,390 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:16,390 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json
+2024-01-16 17:39:16,459 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:39:16,460 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:39:16,509 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:39:17,390 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:18,390 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:19,168 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:20,391 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:22,392 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:24,393 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:24,566 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:26,393 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:28,394 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:28,476 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:39:30,313 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:30,395 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:31,459 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:39:31,460 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:39:31,509 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:39:32,395 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:34,396 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:35,681 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:36,397 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:38,397 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:40,398 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:41,476 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:42,399 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:44,399 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:46,400 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:46,459 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:39:46,460 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:39:46,510 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:39:46,650 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:48,401 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:50,401 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:52,402 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:52,575 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:54,403 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:56,403 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:57,955 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:39:58,404 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:39:58,480 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:40:00,405 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:01,460 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:40:01,460 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:40:01,510 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:40:02,406 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:03,738 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:04,406 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:06,407 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:08,408 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:09,043 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:10,408 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:12,409 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:14,410 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:14,783 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:16,410 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:16,460 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:40:16,460 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:40:16,510 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:40:18,411 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:20,097 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:20,412 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:22,412 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:24,413 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:24,754 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: partial_history
+2024-01-16 17:40:24,755 DEBUG   SenderThread:427217 [sender.py:send():382] send: history
+2024-01-16 17:40:24,756 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: summary_record
+2024-01-16 17:40:24,756 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-01-16 17:40:25,413 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:25,414 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json
+2024-01-16 17:40:25,869 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:26,414 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:28,414 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:28,482 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:40:30,415 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:31,229 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:31,460 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:40:31,461 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:40:31,510 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:40:32,416 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:34,416 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:36,417 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:37,032 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:38,418 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:40,419 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:42,128 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:42,419 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:44,420 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:46,421 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:46,461 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:40:46,461 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:40:46,510 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:40:47,850 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:48,422 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:50,423 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:52,423 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:53,179 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:40:54,424 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:56,425 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:58,425 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:40:58,485 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:40:58,488 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:00,426 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:01,461 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:41:01,461 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:41:01,511 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:41:02,427 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:03,615 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:04,427 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:06,428 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:08,429 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:08,908 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:10,430 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:12,430 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:14,044 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:14,431 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:16,432 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:16,461 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:41:16,462 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:41:16,511 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:41:18,432 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:19,323 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:20,433 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:22,434 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:24,435 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:24,476 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:26,435 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:28,436 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:28,487 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:41:29,777 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:30,437 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:31,461 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:41:31,462 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:41:31,511 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:41:32,437 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:34,250 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: partial_history
+2024-01-16 17:41:34,251 DEBUG   SenderThread:427217 [sender.py:send():382] send: history
+2024-01-16 17:41:34,251 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: summary_record
+2024-01-16 17:41:34,252 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-01-16 17:41:34,438 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:34,439 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json
+2024-01-16 17:41:35,253 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:35,439 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:40,254 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:41,441 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:42,441 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:41:45,424 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:46,461 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:41:46,462 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:41:46,511 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:41:50,703 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:55,703 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:41:58,490 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:42:01,461 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: stop_status
+2024-01-16 17:42:01,462 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: stop_status
+2024-01-16 17:42:01,511 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:42:01,704 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:42:05,722 DEBUG   SenderThread:427217 [sender.py:send():382] send: exit
+2024-01-16 17:42:05,722 INFO    SenderThread:427217 [sender.py:send_exit():589] handling exit code: 0
+2024-01-16 17:42:05,723 INFO    SenderThread:427217 [sender.py:send_exit():591] handling runtime: 397
+2024-01-16 17:42:05,723 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-01-16 17:42:05,723 INFO    SenderThread:427217 [sender.py:send_exit():597] send defer
+2024-01-16 17:42:05,724 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,724 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 0
+2024-01-16 17:42:05,724 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,724 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 0
+2024-01-16 17:42:05,724 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 1
+2024-01-16 17:42:05,724 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,724 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 1
+2024-01-16 17:42:05,724 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,724 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 1
+2024-01-16 17:42:05,724 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 2
+2024-01-16 17:42:05,725 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,725 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 2
+2024-01-16 17:42:05,725 INFO    HandlerThread:427217 [system_monitor.py:finish():203] Stopping system monitor
+2024-01-16 17:42:05,726 INFO    HandlerThread:427217 [interfaces.py:finish():202] Joined cpu monitor
+2024-01-16 17:42:05,726 DEBUG   SystemMonitor:427217 [system_monitor.py:_start():179] Finished system metrics aggregation loop
+2024-01-16 17:42:05,726 DEBUG   SystemMonitor:427217 [system_monitor.py:_start():183] Publishing last batch of metrics
+2024-01-16 17:42:05,730 INFO    HandlerThread:427217 [interfaces.py:finish():202] Joined disk monitor
+2024-01-16 17:42:05,973 INFO    HandlerThread:427217 [interfaces.py:finish():202] Joined gpu monitor
+2024-01-16 17:42:05,973 INFO    HandlerThread:427217 [interfaces.py:finish():202] Joined memory monitor
+2024-01-16 17:42:05,973 INFO    HandlerThread:427217 [interfaces.py:finish():202] Joined network monitor
+2024-01-16 17:42:05,974 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,974 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 2
+2024-01-16 17:42:05,974 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 3
+2024-01-16 17:42:05,974 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,974 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 3
+2024-01-16 17:42:05,975 DEBUG   SenderThread:427217 [sender.py:send():382] send: stats
+2024-01-16 17:42:05,977 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,977 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 3
+2024-01-16 17:42:05,977 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 4
+2024-01-16 17:42:05,977 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,977 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 4
+2024-01-16 17:42:05,978 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,978 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 4
+2024-01-16 17:42:05,978 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 5
+2024-01-16 17:42:05,978 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,978 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 5
+2024-01-16 17:42:05,979 DEBUG   SenderThread:427217 [sender.py:send():382] send: summary
+2024-01-16 17:42:05,979 INFO    SenderThread:427217 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-01-16 17:42:05,979 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,979 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 5
+2024-01-16 17:42:05,979 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 6
+2024-01-16 17:42:05,980 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,980 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 6
+2024-01-16 17:42:05,980 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,980 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 6
+2024-01-16 17:42:05,980 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 7
+2024-01-16 17:42:05,980 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: status_report
+2024-01-16 17:42:05,980 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:05,980 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 7
+2024-01-16 17:42:05,981 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:05,981 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 7
+2024-01-16 17:42:06,449 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json
+2024-01-16 17:42:06,722 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: poll_exit
+2024-01-16 17:42:07,148 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 8
+2024-01-16 17:42:07,149 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: poll_exit
+2024-01-16 17:42:07,149 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:07,149 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 8
+2024-01-16 17:42:07,149 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:07,150 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 8
+2024-01-16 17:42:07,150 INFO    SenderThread:427217 [job_builder.py:build():296] Attempting to build job artifact
+2024-01-16 17:42:07,151 INFO    SenderThread:427217 [job_builder.py:_get_source_type():426] is repo sourced job
+2024-01-16 17:42:07,164 INFO    SenderThread:427217 [job_builder.py:build():402] adding wandb-job metadata file
+2024-01-16 17:42:07,167 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 9
+2024-01-16 17:42:07,167 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:07,167 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 9
+2024-01-16 17:42:07,168 DEBUG   SenderThread:427217 [sender.py:send():382] send: artifact
+2024-01-16 17:42:07,450 INFO    Thread-12 :427217 [dir_watcher.py:_on_file_modified():288] file/dir modified: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:42:07,723 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: poll_exit
+2024-01-16 17:42:08,107 INFO    SenderThread:427217 [sender.py:send_artifact():1494] sent artifact job-https___github.com_nianlonggu_WhisperSeg.git_train.py - {'id': 'QXJ0aWZhY3Q6NjkyMzU4MzQ0', 'state': 'COMMITTED', 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjk2Nzc1OTc0', 'latestArtifact': {'id': 'QXJ0aWZhY3Q6NjkyNzY0MzUx', 'versionIndex': 6}}}
+2024-01-16 17:42:08,107 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:08,107 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 9
+2024-01-16 17:42:08,107 INFO    SenderThread:427217 [dir_watcher.py:finish():358] shutting down directory watcher
+2024-01-16 17:42:08,451 INFO    SenderThread:427217 [dir_watcher.py:finish():388] scan: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files
+2024-01-16 17:42:08,451 INFO    SenderThread:427217 [dir_watcher.py:finish():402] scan save: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/config.yaml config.yaml
+2024-01-16 17:42:08,451 INFO    SenderThread:427217 [dir_watcher.py:finish():402] scan save: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log output.log
+2024-01-16 17:42:08,451 INFO    SenderThread:427217 [dir_watcher.py:finish():402] scan save: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/requirements.txt requirements.txt
+2024-01-16 17:42:08,451 INFO    SenderThread:427217 [dir_watcher.py:finish():402] scan save: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-metadata.json wandb-metadata.json
+2024-01-16 17:42:08,451 INFO    SenderThread:427217 [dir_watcher.py:finish():402] scan save: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/conda-environment.yaml conda-environment.yaml
+2024-01-16 17:42:08,455 INFO    SenderThread:427217 [dir_watcher.py:finish():402] scan save: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json wandb-summary.json
+2024-01-16 17:42:08,455 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 10
+2024-01-16 17:42:08,455 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: poll_exit
+2024-01-16 17:42:08,458 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:08,458 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 10
+2024-01-16 17:42:08,459 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:08,460 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 10
+2024-01-16 17:42:08,460 INFO    SenderThread:427217 [file_pusher.py:finish():175] shutting down file pusher
+2024-01-16 17:42:08,723 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: poll_exit
+2024-01-16 17:42:08,724 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: poll_exit
+2024-01-16 17:42:08,846 INFO    wandb-upload_1:427217 [upload_job.py:push():131] Uploaded file /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/config.yaml
+2024-01-16 17:42:08,853 INFO    wandb-upload_0:427217 [upload_job.py:push():131] Uploaded file /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/output.log
+2024-01-16 17:42:08,934 INFO    wandb-upload_3:427217 [upload_job.py:push():131] Uploaded file /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/conda-environment.yaml
+2024-01-16 17:42:08,938 INFO    wandb-upload_2:427217 [upload_job.py:push():131] Uploaded file /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/requirements.txt
+2024-01-16 17:42:08,939 INFO    wandb-upload_4:427217 [upload_job.py:push():131] Uploaded file /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/files/wandb-summary.json
+2024-01-16 17:42:09,140 INFO    Thread-11 (_thread_body):427217 [sender.py:transition_state():617] send defer: 11
+2024-01-16 17:42:09,140 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:09,140 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 11
+2024-01-16 17:42:09,141 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:09,141 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 11
+2024-01-16 17:42:09,141 INFO    SenderThread:427217 [file_pusher.py:join():181] waiting for file pusher
+2024-01-16 17:42:09,141 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 12
+2024-01-16 17:42:09,141 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:09,141 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 12
+2024-01-16 17:42:09,142 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:09,142 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 12
+2024-01-16 17:42:09,142 INFO    SenderThread:427217 [file_stream.py:finish():595] file stream finish called
+2024-01-16 17:42:09,618 INFO    SenderThread:427217 [file_stream.py:finish():599] file stream finish is done
+2024-01-16 17:42:09,618 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 13
+2024-01-16 17:42:09,618 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:09,619 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 13
+2024-01-16 17:42:09,619 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:09,619 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 13
+2024-01-16 17:42:09,619 INFO    SenderThread:427217 [sender.py:transition_state():617] send defer: 14
+2024-01-16 17:42:09,619 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: defer
+2024-01-16 17:42:09,620 INFO    HandlerThread:427217 [handler.py:handle_request_defer():172] handle defer: 14
+2024-01-16 17:42:09,620 DEBUG   SenderThread:427217 [sender.py:send():382] send: final
+2024-01-16 17:42:09,620 DEBUG   SenderThread:427217 [sender.py:send():382] send: footer
+2024-01-16 17:42:09,620 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: defer
+2024-01-16 17:42:09,620 INFO    SenderThread:427217 [sender.py:send_request_defer():613] handle sender defer: 14
+2024-01-16 17:42:09,621 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: poll_exit
+2024-01-16 17:42:09,621 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: poll_exit
+2024-01-16 17:42:09,622 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: poll_exit
+2024-01-16 17:42:09,622 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: poll_exit
+2024-01-16 17:42:09,623 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: server_info
+2024-01-16 17:42:09,623 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: server_info
+2024-01-16 17:42:09,625 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: get_summary
+2024-01-16 17:42:09,625 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: sampled_history
+2024-01-16 17:42:09,626 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: internal_messages
+2024-01-16 17:42:09,626 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: job_info
+2024-01-16 17:42:09,773 DEBUG   SenderThread:427217 [sender.py:send_request():409] send_request: job_info
+2024-01-16 17:42:09,773 INFO    MainThread:427217 [wandb_run.py:_footer_history_summary_info():3857] rendering history
+2024-01-16 17:42:09,774 INFO    MainThread:427217 [wandb_run.py:_footer_history_summary_info():3889] rendering summary
+2024-01-16 17:42:09,774 INFO    MainThread:427217 [wandb_run.py:_footer_sync_info():3816] logging synced files
+2024-01-16 17:42:09,774 DEBUG   HandlerThread:427217 [handler.py:handle_request():146] handle_request: shutdown
+2024-01-16 17:42:09,774 INFO    HandlerThread:427217 [handler.py:finish():869] shutting down handler
+2024-01-16 17:42:10,627 INFO    WriterThread:427217 [datastore.py:close():296] close: /mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/wandb/run-20240116_173527-8avzhrgu/run-8avzhrgu.wandb
+2024-01-16 17:42:10,773 INFO    SenderThread:427217 [sender.py:finish():1572] shutting down sender
+2024-01-16 17:42:10,773 INFO    SenderThread:427217 [file_pusher.py:finish():175] shutting down file pusher
+2024-01-16 17:42:10,773 INFO    SenderThread:427217 [file_pusher.py:join():181] waiting for file pusher

@@ -1,0 +1,121 @@
+/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/transformers/optimization.py:411: FutureWarning: This implementation of AdamW is deprecated and will be removed in a future version. Use the PyTorch implementation torch.optim.AdamW instead, or set `no_deprecation_warning=True` to disable this warning
+  warnings.warn(
+  0%|                                                                                                             | 0/16 [00:00<?, ?it/s]
+
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.40it/s]
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:10<00:00,  1.47it/s]
+
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:10<00:00,  1.46it/s]
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:10<00:00,  1.47it/s]
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:10<00:00,  1.46it/s]
+
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:10<00:00,  1.46it/s]
+
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+
+ 56%|████████████████████████████████████████████████████████▊                                            | 9/16 [00:06<00:04,  1.50it/s]
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 16/16 [00:11<00:00,  1.45it/s]
+
+
+ 38%|█████████████████████████████████████▉                                                               | 6/16 [00:04<00:08,  1.24it/s]
+Traceback (most recent call last):
+  File "/mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/train.py", line 229, in <module>
+    training_loss_value_list.append( train_iteration(batch) )
+  File "/mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/train.py", line 30, in train_iteration
+    scaler.step(optimizer)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/cuda/amp/grad_scaler.py", line 416, in step
+    retval = self._maybe_opt_step(optimizer, optimizer_state, *args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/cuda/amp/grad_scaler.py", line 315, in _maybe_opt_step
+    retval = optimizer.step(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/optim/lr_scheduler.py", line 68, in wrapper
+    return wrapped(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/optim/optimizer.py", line 373, in wrapper
+    out = func(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/transformers/optimization.py", line 466, in step
+    exp_avg.mul_(beta1).add_(grad, alpha=(1.0 - beta1))
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/train.py", line 229, in <module>
+    training_loss_value_list.append( train_iteration(batch) )
+  File "/mnt/storage/Nianlong/work/NCCR/datascience_requests/WhisperSeg/train.py", line 30, in train_iteration
+    scaler.step(optimizer)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/cuda/amp/grad_scaler.py", line 416, in step
+    retval = self._maybe_opt_step(optimizer, optimizer_state, *args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/cuda/amp/grad_scaler.py", line 315, in _maybe_opt_step
+    retval = optimizer.step(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/optim/lr_scheduler.py", line 68, in wrapper
+    return wrapped(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/optim/optimizer.py", line 373, in wrapper
+    out = func(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/nianlong/miniconda3/envs/wseg/lib/python3.10/site-packages/transformers/optimization.py", line 466, in step
+    exp_avg.mul_(beta1).add_(grad, alpha=(1.0 - beta1))
+KeyboardInterrupt
