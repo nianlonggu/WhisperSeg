@@ -1,1 +1,0 @@
-{"current_step": 10000, "train/learning_rate": 0.0, "train/loss": 0.43628049790859225, "epoch": 59.16568047337278, "_timestamp": 1705484573.4681969, "_runtime": 7567.466450929642, "_step": 119, "validate/score": 0.6707331992368455, "validate/segment_score": 0.4214945424013434, "validate/frame_score": 0.9199718560723475, "_wandb": {"runtime": 7610}}
