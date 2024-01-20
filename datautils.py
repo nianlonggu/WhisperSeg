@@ -220,8 +220,90 @@ def slice_audios_and_labels( audio_list, label_list, total_spec_columns ):
     
     return sliced_audio_list, sliced_label_list
 
+# class VocalSegDataset(Dataset):
+#     def __init__(self, audio_list, label_list, tokenizer, max_length, total_spec_columns, species_codebook ):
+#         self.audio_list = audio_list
+#         self.label_list = label_list
+#         self.feature_extractor_bank = self.get_feature_extractor_bank( label_list )
+#         self.tokenizer = tokenizer
+#         self.max_length = max_length
+#         self.total_spec_columns = total_spec_columns
+#         self.species_codebook = species_codebook
+        
+#     def get_feature_extractor_bank(self, label_list ):
+#         feature_extractor_bank = {}
+#         for label in label_list:
+#             key = "%s-%s-%s"%( str( label["sr"] ), str(label["spec_time_step"]), str(label["min_frequency"]) )
+#             if key not in feature_extractor_bank:
+#                 feature_extractor_bank[key] = WhisperSegFeatureExtractor( label["sr"], label["spec_time_step"], label["min_frequency"] )
+#         return feature_extractor_bank
+        
+#     def map_time_to_spec_col_index(self, t, spec_time_step ):
+#         return min( int(np.round( t/( spec_time_step * RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP ) )), self.total_spec_columns  )
+        
+#     def __len__(self):
+#         return len(self.audio_list)
+    
+#     def __getitem__(self, idx ):
+        
+#         audio = self.audio_list[idx]
+#         label = self.label_list[idx]
+
+#         sr = label["sr"]
+#         spec_time_step = label["spec_time_step"]
+#         min_frequency = label["min_frequency"]
+#         feature_extractor = self.feature_extractor_bank[ "%s-%s-%s"%( str(sr), str(spec_time_step), str(min_frequency) ) ]
+        
+#         num_samples_in_clip = int(np.round( self.total_spec_columns * spec_time_step * sr ))
+                    
+#         clip_start = np.random.choice( min( num_samples_in_clip+1, len(audio) - feature_extractor.n_fft + 1 ) )        
+#         audio_clip = audio[ clip_start: clip_start + num_samples_in_clip ]
+        
+#         actual_clip_duration = len( audio_clip ) / sr
+#         start_time = clip_start / sr
+#         end_time = start_time + actual_clip_duration
+        
+#         intersected_indices = np.logical_and( label["onset"] < end_time, label["offset"] > start_time )
+        
+#         onset_in_clip = np.maximum( label["onset"][intersected_indices], start_time ) - start_time 
+#         offset_in_clip = np.minimum( label["offset"][intersected_indices], end_time ) - start_time
+#         cluster_id_in_clip = label["cluster_id"][intersected_indices]
+        
+#         """
+#         The following code part convert the onset, offset, and cluster_id array into label texts
+#         onset_timestamp + cluster_id + offset_timestamp: e.g.,
+#         <|zebra_finch|><|0|>7<|6|><|16|>6<|18|>
+#         """
+#         label_text = [ self.species_codebook.get( label["species"], "<|unknown|>" )  ]
+        
+#         for pos in range(len(onset_in_clip)):
+#             label_text.append( "<|%d|>%d<|%d|>"%(
+#                                     self.map_time_to_spec_col_index( onset_in_clip[pos], spec_time_step ),
+#                                     cluster_id_in_clip[pos],
+#                                     self.map_time_to_spec_col_index( offset_in_clip[pos], spec_time_step ),
+#                                 )
+#                              )
+#         label_text = "".join( label_text )
+        
+#         audio_clip = np.concatenate( [ audio_clip, np.zeros( num_samples_in_clip - len(audio_clip) ) ], axis = 0 ).astype(np.float32)
+#         input_features = feature_extractor(audio_clip, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
+        
+#         decoder_input_ids = self.tokenizer.encode( label_text,  max_length = self.max_length + 1, truncation=True, padding = True )
+#         labels = decoder_input_ids[1:]
+#         decoder_input_ids = decoder_input_ids[:-1]
+#         decoder_input_ids += [ self.tokenizer.pad_token_id ] * ( self.max_length - len( decoder_input_ids ) )
+#         labels += [-100] * ( self.max_length  - len(labels) )
+        
+#         return {
+#             "input_features":input_features,
+#             "decoder_input_ids":np.array(decoder_input_ids),
+#             "labels":np.array(labels)
+#         }
+
 class VocalSegDataset(Dataset):
-    def __init__(self, audio_list, label_list, tokenizer, max_length, total_spec_columns, species_codebook ):
+    def __init__(self, audio_list, label_list, tokenizer, max_length, total_spec_columns, species_codebook,
+                       audio_mixing_ratio = 0.0
+                ):
         self.audio_list = audio_list
         self.label_list = label_list
         self.feature_extractor_bank = self.get_feature_extractor_bank( label_list )
@@ -229,6 +311,7 @@ class VocalSegDataset(Dataset):
         self.max_length = max_length
         self.total_spec_columns = total_spec_columns
         self.species_codebook = species_codebook
+        self.audio_mixing_ratio = audio_mixing_ratio
         
     def get_feature_extractor_bank(self, label_list ):
         feature_extractor_bank = {}
@@ -239,27 +322,26 @@ class VocalSegDataset(Dataset):
         return feature_extractor_bank
         
     def map_time_to_spec_col_index(self, t, spec_time_step ):
-        return min( int(np.round( t/( spec_time_step * RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP ) )), self.total_spec_columns  )
-        
-    def __len__(self):
-        return len(self.audio_list)
-    
-    def __getitem__(self, idx ):
-        
-        audio = self.audio_list[idx]
-        label = self.label_list[idx]
+        return min( int(np.round( t/( spec_time_step * RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP ) )), 
+                    self.total_spec_columns  
+                  )
 
+    def get_input_features_and_on_offsets( self, audio, label ):
         sr = label["sr"]
         spec_time_step = label["spec_time_step"]
         min_frequency = label["min_frequency"]
         feature_extractor = self.feature_extractor_bank[ "%s-%s-%s"%( str(sr), str(spec_time_step), str(min_frequency) ) ]
         
         num_samples_in_clip = int(np.round( self.total_spec_columns * spec_time_step * sr ))
-                    
+        
         clip_start = np.random.choice( min( num_samples_in_clip+1, len(audio) - feature_extractor.n_fft + 1 ) )        
         audio_clip = audio[ clip_start: clip_start + num_samples_in_clip ]
         
         actual_clip_duration = len( audio_clip ) / sr
+
+        audio_clip = np.concatenate( [ audio_clip, np.zeros( num_samples_in_clip - len(audio_clip) ) ], axis = 0 ).astype(np.float32)
+        input_features = feature_extractor(audio_clip, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
+        
         start_time = clip_start / sr
         end_time = start_time + actual_clip_duration
         
@@ -268,25 +350,52 @@ class VocalSegDataset(Dataset):
         onset_in_clip = np.maximum( label["onset"][intersected_indices], start_time ) - start_time 
         offset_in_clip = np.minimum( label["offset"][intersected_indices], end_time ) - start_time
         cluster_id_in_clip = label["cluster_id"][intersected_indices]
+
+        on_offsets = []
+        for pos in range(len(onset_in_clip)):
+            on_offsets.append( [ self.map_time_to_spec_col_index( onset_in_clip[pos], spec_time_step ),
+                                 self.map_time_to_spec_col_index( offset_in_clip[pos], spec_time_step ),
+                                 cluster_id_in_clip[pos]
+                               ] )
+
+        species_code = self.species_codebook.get( label["species"], "<|unknown|>" ) 
+        
+        return input_features, on_offsets, species_code
+    
+    def __len__(self):
+        return len(self.audio_list)
+        
+    def __getitem__(self, idx ):
+        input_features_1, on_offsets_1, species_code_1 = self.get_input_features_and_on_offsets( self.audio_list[idx], 
+                                                                                               self.label_list[idx] )
+ 
+        mix_idx = np.random.choice(len(self.audio_list))
+        input_features_2, on_offsets_2, species_code_2 = self.get_input_features_and_on_offsets( self.audio_list[mix_idx], 
+                                                                                               self.label_list[mix_idx] )
+
+        if np.random.rand() >= self.audio_mixing_ratio:
+            ## do not mixing the audios
+            input_features = input_features_1
+            on_offsets = on_offsets_1
+            species_code = species_code_1
+        else:
+            ## mixing the input_features
+            input_features = np.maximum( input_features_1, input_features_2 )
+            on_offsets = sorted( on_offsets_1 + on_offsets_2, key = lambda x:x[0] )
+            if species_code_1 != species_code_2:
+                species_code = "<|unknown|>"
+            else:
+                species_code = species_code_1
         
         """
         The following code part convert the onset, offset, and cluster_id array into label texts
         onset_timestamp + cluster_id + offset_timestamp: e.g.,
         <|zebra_finch|><|0|>7<|6|><|16|>6<|18|>
         """
-        label_text = [ self.species_codebook.get( label["species"], "<|unknown|>" )  ]
-        
-        for pos in range(len(onset_in_clip)):
-            label_text.append( "<|%d|>%d<|%d|>"%(
-                                    self.map_time_to_spec_col_index( onset_in_clip[pos], spec_time_step ),
-                                    cluster_id_in_clip[pos],
-                                    self.map_time_to_spec_col_index( offset_in_clip[pos], spec_time_step ),
-                                )
-                             )
+        label_text = [ species_code ]
+        for onset_idx, offset_idx, cluster_idx in on_offsets:
+            label_text.append( "<|%d|>%d<|%d|>"%(onset_idx, cluster_idx, offset_idx ) )
         label_text = "".join( label_text )
-        
-        audio_clip = np.concatenate( [ audio_clip, np.zeros( num_samples_in_clip - len(audio_clip) ) ], axis = 0 ).astype(np.float32)
-        input_features = feature_extractor(audio_clip, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
         
         decoder_input_ids = self.tokenizer.encode( label_text,  max_length = self.max_length + 1, truncation=True, padding = True )
         labels = decoder_input_ids[1:]
@@ -299,6 +408,7 @@ class VocalSegDataset(Dataset):
             "decoder_input_ids":np.array(decoder_input_ids),
             "labels":np.array(labels)
         }
+
 
 
 

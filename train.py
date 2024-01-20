@@ -116,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_num_epochs", type = int, default = 3 )
     parser.add_argument("--max_num_iterations", type = int, default = None )
     parser.add_argument("--val_ratio", type = float, default = 0.0 )
+    parser.add_argument("--audio_mixing_ratio", type = float, default = 0.0 )
     
     parser.add_argument("--max_length", type = int, default = 100 )
     parser.add_argument("--total_spec_columns", type = int, default = 1000 )
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_steps", type = int, default = 100 )
     parser.add_argument("--freeze_encoder", type = int, default = 0 )
     parser.add_argument("--dropout", type = float, default = 0.0 )
-    parser.add_argument("--num_workers", type = int, default = 0 )
+    parser.add_argument("--num_workers", type = int, default = 2 )
     parser.add_argument("--clear_cluster_codebook", type = int, help="set the pretrained model's cluster_codebook to empty dict. This is used when we train the segmenter on a complete new dataset. Set this to 0 if you just want to slighlt finetune the model with some additional data with the same cluster naming rule.", default = 0 )
     
     args = parser.parse_args()
@@ -215,9 +216,10 @@ if __name__ == "__main__":
 
     ## After the training val random splitting is done and their is no need for consistent random seed across different processes, then setting a different seed for differnt process
     set_seed( args.seed + rank ) 
-    
+
+    species_codebook = model.module.config.species_codebook if ddp_mode else model.config.species_codebook
     training_dataset = VocalSegDataset( audio_list_train, label_list_train, tokenizer, args.max_length, 
-                                         args.total_spec_columns, model.module.config.species_codebook  )
+                                         args.total_spec_columns, species_codebook, args.audio_mixing_ratio  )
 
     if ddp_mode:
         training_sampler = torch.utils.data.distributed.DistributedSampler(training_dataset, shuffle=True)
