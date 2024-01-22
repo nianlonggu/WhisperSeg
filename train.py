@@ -228,9 +228,9 @@ if __name__ == "__main__":
     training_dataloader = DataLoader( training_dataset, 
                                       batch_size = args.batch_size_per_device, 
                                       shuffle = not ddp_mode, 
-                                      sampler=training_sampler, 
-                                      worker_init_fn = lambda x:set_seed( args.seed + rank + x ), 
-                                      num_workers = args.num_workers , 
+                                      sampler=training_sampler,  
+                                      worker_init_fn = lambda x: set_seed( args.seed + epoch *( world_size + args.num_workers) + rank * args.num_workers + x ),
+                                      num_workers = args.num_workers, 
                                       drop_last= True,
                                       pin_memory = False
                                     )
