@@ -116,7 +116,6 @@ if __name__ == "__main__":
     parser.add_argument("--max_num_epochs", type = int, default = 3 )
     parser.add_argument("--max_num_iterations", type = int, default = None )
     parser.add_argument("--val_ratio", type = float, default = 0.0 )
-    parser.add_argument("--audio_mixing_ratio", type = float, default = 0.0 )
     
     parser.add_argument("--max_length", type = int, default = 100 )
     parser.add_argument("--total_spec_columns", type = int, default = 1000 )
@@ -219,7 +218,7 @@ if __name__ == "__main__":
 
     species_codebook = model.module.config.species_codebook if ddp_mode else model.config.species_codebook
     training_dataset = VocalSegDataset( audio_list_train, label_list_train, tokenizer, args.max_length, 
-                                         args.total_spec_columns, species_codebook, args.audio_mixing_ratio  )
+                                         args.total_spec_columns, species_codebook )
 
     if ddp_mode:
         training_sampler = torch.utils.data.distributed.DistributedSampler(training_dataset, shuffle=True)
@@ -229,7 +228,7 @@ if __name__ == "__main__":
                                       batch_size = args.batch_size_per_device, 
                                       shuffle = not ddp_mode, 
                                       sampler=training_sampler,  
-                                      worker_init_fn = lambda x: set_seed( args.seed + epoch *( world_size + args.num_workers) + rank * args.num_workers + x ),
+                                      worker_init_fn = lambda x: [ set_seed( args.seed + epoch *( world_size + args.num_workers) + rank * args.num_workers + x ), print(args.seed + epoch *( world_size + args.num_workers) + rank * args.num_workers + x) ],
                                       num_workers = args.num_workers, 
                                       drop_last= True,
                                       pin_memory = False
