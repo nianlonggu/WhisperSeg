@@ -96,7 +96,8 @@ def load_model( initial_model_path, total_spec_columns, dropout = 0.0):
             "marmoset":"<|marmoset|>",
             "human":"<|human|>",
             ## set unknown for other species
-            "unknown":"<|unknown|>"
+            "unknown":"<|unknown|>",
+            "animal":"<|animal|>"
         }
 
     ## do not change nccratliri/whisper-large to openai/whisper-large, since the tokenizer in openai/whisper-large has changed its vocabulary

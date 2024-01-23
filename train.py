@@ -193,8 +193,8 @@ if __name__ == "__main__":
                                          args.total_spec_columns, model.module.config.species_codebook  )
 
     training_dataloader = DataLoader( training_dataset, batch_size = args.batch_size , shuffle = True , 
-                                             worker_init_fn = lambda x:[np.random.seed( int( time.time() )  + x ),  
-                                                                    torch.manual_seed(int( time.time() ) + x) ] , 
+                                             worker_init_fn = lambda x:[np.random.seed( epoch  + x ),  
+                                                                    torch.manual_seed( epoch + x) ], 
                                              num_workers = args.num_workers , drop_last= True,
                                              pin_memory = False
                                            )
