@@ -76,7 +76,9 @@ In the train/ folder, each audio recording is paired with an annotation file. He
     * "**tolerance**": When computing the $F1_\text{seg}$ score, we need to check if the both the absolute difference between the predicted onset and the ground-truth onset and the absolute difference between the predicted and ground-truth offsets are below a tolerance (in second). We choose **tolerance** 0.2 s for human and 0.01s for animals.
     * "**time_per_frame_for_scoring**": The time bin size (in second) used when computing the $F1_\text{frame}$ score. We set **time_per_frame_for_scoring** to 0.001 for all datasets.
     * "**eps**": The threshold $\epsilon_\text{vote}$ during the multi-trial majority voting when processing long audio files
-      
+
+*Recommended values of **sr, min_frequency, spec_time_step, min_segment_length, time_per_frame_for_scoring, and eps** are available at [config/segment_config.json](../config/segment_config.json)
+
 The test/ folder contains the test set and has the same structure as the training set.
 
 Here is the file structures (taking the marmoset dataset (downloaded above) as an example):

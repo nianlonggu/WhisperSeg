@@ -12,6 +12,7 @@ module load anaconda3
 
 source activate wseg
 
+cd ..
 
 # python train.py --initial_model_path openai/whisper-large --train_dataset_folder data/datasets/zebra_finch/train/ --model_folder model/whisperseg-zebra-finch-vad --gpu_list 0
 

@@ -24,18 +24,30 @@ conda install -c pypi cudnn -y
 ```
 
 ## Documentation
+### Model Training and Evaluation
 Please refer to the following documents for the complete pipeline of training WhisperSeg, including 1) dataset processing, 2) model training and 3) model evaluation.
 
-1. [Dataset Processing](docs/DatasetProcessing.md)
-2. [Model Training](docs/ModelTraining.md)
-3. [Evaluation](docs/Evaluation.md)
-4. [Run WhisperSeg as a Web Service](docs/RunWhisperSegAsWebService.md)  
-   This allows running WhisperSeg on a Web server, and call the segmentation service from any client of different environments, such as python or MatLab. The best way to incorporate WhisperSeg into your original workflow.
+1. [**Dataset Processing**](docs/DatasetProcessing.md)
+2. [**Model Training**](docs/ModelTraining.md)
+3. [**Evaluation**](docs/Evaluation.md)
 
 We have also prepared a Jupyter notebook that provides a comprehensive walkthrough of WhisperSeg finetuning. This includes steps for data processing, training, and evaluation. You can access this notebook at [docs/WhisperSeg_Training_Pipeline.ipynb](docs/WhisperSeg_Training_Pipeline.ipynb), or run it in Google Colab: <a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Training_Pipeline.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
-## Voice Activity Detection Demo <a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Voice_Activity_Detection_Demo.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+### How To Use The Trained Model
+#### Use WhisperSeg in your Python code
+Please refer to the section [**Voice Activity Detection Demo**](README.md#voice-activity-detection-demo) below.
+
+#### Run WhisperSeg as a Web Service, and call it via API
+Please refer to the tutorial: [**Run WhisperSeg as a Web Service**](docs/RunWhisperSegAsWebService.md)  
+   This allows running WhisperSeg on a Web server, and call the segmentation service from any client of different environments, such as python or MatLab. The best way to incorporate WhisperSeg into your original workflow.
+
+#### Try WhisperSeg on a GUI (Webpage)
+Please refer to the tutorial: [**Run WhisperSeg via GUI**](docs/RunWhisperSegViaGUI.md)
+
+## Voice Activity Detection Demo<a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Voice_Activity_Detection_Demo.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 We demonstrate here using a WhisperSeg trained on multi-species data to segment the audio files of different species.
+
+**Note:** If you are using your custom models, replace the model's name ("nccratliri/whisperseg-large-ms" or "nccratliri/whisperseg-large-ms-ct2") with your own trained model's name.
 
 ### Load the pretrained multi-species WhisperSeg
 
@@ -50,7 +62,7 @@ segmenter = WhisperSegmenter( "nccratliri/whisperseg-large-ms", device="cuda" )
 
 Alternatively, we provided a [CTranslate2](https://github.com/OpenNMT/CTranslate2) converted version, which enables 4x faster inference speed. 
 
-To use the CTranslate2 converted model (with checkpoint name ended with "-ct2"), we need to import the "**WhisperSegmenterFast**" module.
+To use the CTranslate2 converted model (**with checkpoint name ended with "-ct2"**), we need to import the "**WhisperSegmenterFast**" module.
 
 
 ```python
@@ -68,8 +80,8 @@ The following paratemers need to be configured for different species.
 * **eps**: The threshold $\epsilon_\text{vote}$ during the multi-trial majority voting when processing long audio files
 * **num_trials**: The number of segmentation variant produced during the multi-trial majority voting process. Setting num_trials to 1 for noisy data with long segment durations, such as the human AVA-speech dataset, and set num_trials to 3 when segmenting animal vocalizations.
 
-The recommended settings of these parameters are listed in Table 1 in the paper:
-![Specific Segmentation Parameters](assets/species_specific_parameters.png)
+The recommended settings of these parameters are available at [config/segment_config.json](config/segment_config.json). More details are described in Table 1 in the paper:
+![Specific Segmentation Parameters](assets/species_specific_parameters.png). 
 
 ### Segmentation Examples
 

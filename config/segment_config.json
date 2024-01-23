@@ -1,0 +1,50 @@
+{
+    "zebra_finch":{
+        "sr": 32000,  
+        "min_frequency": 0,
+        "spec_time_step": 0.0025,
+        "min_segment_length": 0.01,
+        "eps": 0.02,
+        "num_trials": 3
+    },
+    "bengalese_finch":{
+        "sr": 32000,  
+        "min_frequency": 0,
+        "spec_time_step": 0.0025,
+        "min_segment_length": 0.01,
+        "eps": 0.02,
+        "num_trials": 3
+    },
+    "marmoset":{
+        "sr": 48000,  
+        "min_frequency": 0,
+        "spec_time_step": 0.0025,
+        "min_segment_length": 0.01,
+        "eps": 0.02,
+        "num_trials": 3
+    },
+    "mouse":{
+        "sr": 300000,  
+        "min_frequency": 35000,
+        "spec_time_step": 0.0005,
+        "min_segment_length": 0.01,
+        "eps": 0.02,
+        "num_trials": 3
+    },
+    "human":{
+        "sr": 16000,  
+        "min_frequency": 0,
+        "spec_time_step": 0.01,
+        "min_segment_length": 0.1,
+        "eps": 0.2,
+        "num_trials": 1
+    },
+    "meerkat":{
+        "sr": 16000,  
+        "min_frequency": 0,
+        "spec_time_step": 0.001,
+        "min_segment_length": 0.01,
+        "eps": 0.02,
+        "num_trials": 3
+    }    
+}
