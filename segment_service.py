@@ -21,7 +21,8 @@ import io
 # Make Flask application
 app = Flask(__name__)
 CORS(app)
-
+# maintain the returned order of keys!
+app.json.sort_keys = False
 
 def decimal_to_seconds( decimal_time ):
     splits = decimal_time.split(":")
