@@ -126,9 +126,9 @@ def init_session_state():
         st.session_state["segment_config"] = json.load(open(args.segment_config_path))
         
         st.session_state["species_list"] = sorted(list(st.session_state["segment_config"].keys())) + ["Other"]
-        if "meerkat" in st.session_state["species_list"]:
-            st.session_state["species_list"].remove("meerkat")
-            st.session_state["species_list"] = ["meerkat"]  + st.session_state["species_list"]
+        #if "meerkat" in st.session_state["species_list"]:
+        #    st.session_state["species_list"].remove("meerkat")
+        #    st.session_state["species_list"] = ["meerkat"]  + st.session_state["species_list"]
     
     if "species_changed" not in st.session_state:
         st.session_state['species_changed'] = False
