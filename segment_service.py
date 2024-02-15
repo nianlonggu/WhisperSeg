@@ -88,7 +88,7 @@ def segment():
             audio = audio[channel_id]
             
         prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials )
+                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials, batch_size = args.batch_size )
     except:
         print("Segmentation Error! Returning an empty prediction ...")
         prediction = {
@@ -125,6 +125,7 @@ if __name__ == '__main__':
     parser.add_argument("--model_path")
     parser.add_argument("--config_file_path", help="The file for recommended segment parameters of different species.", default="config/segment_config.json")
     parser.add_argument("--device", help="cpu or cuda", default = "cuda")
+    parser.add_argument("--batch_size", default=8, type=int)
     args = parser.parse_args()
     
     try:
