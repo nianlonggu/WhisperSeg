@@ -61,6 +61,8 @@ def segment():
     try:
         request_info = request.json
         audio_file_base64_string = request_info["audio_file_base64_string"]
+        ### drop all the key-value pairs whose value is None, since we will determine the default value within this function.
+        request_info = { k:v for k,v in request_info.items() if v is not None}
         
         if "species" in request_info and request_info["species"] in segment_config:
             cfg = segment_config[request_info["species"]]
