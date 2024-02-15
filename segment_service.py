@@ -64,20 +64,27 @@ def segment():
         
         if "species" in request_info and request_info["species"] in segment_config:
             cfg = segment_config[request_info["species"]]
-            sr = cfg["sr"]
-            min_frequency = cfg["min_frequency"]
-            spec_time_step = cfg["spec_time_step"]
-            min_segment_length = cfg["min_segment_length"]
-            eps = cfg["eps"]
-            num_trials = cfg["num_trials"]
+            default_sr = cfg["sr"]
+            default_min_frequency = cfg["min_frequency"]
+            default_spec_time_step = cfg["spec_time_step"]
+            default_min_segment_length = cfg["min_segment_length"]
+            default_eps = cfg["eps"]
+            default_num_trials = cfg["num_trials"]
         else:
-            sr = request_info.get("sr", 32000)
-            min_frequency = request_info.get("min_frequency", 0)
-            spec_time_step = request_info.get( "spec_time_step", 0.0025 )
-            min_segment_length = request_info.get( "min_segment_length", 0.01 )
-            eps = request_info.get( "eps", 0.02 )
-            num_trials = request_info.get( "num_trials", 3 )
+            default_sr = 32000
+            default_min_frequency = 0
+            default_spec_time_step = 0.0025
+            default_min_segment_length = 0.01
+            default_eps = 0.02 
+            default_num_trials = 3
             
+        sr = request_info.get("sr", default_sr)
+        min_frequency = request_info.get("min_frequency", default_min_frequency)
+        spec_time_step = request_info.get( "spec_time_step", default_spec_time_step )
+        min_segment_length = request_info.get( "min_segment_length", default_min_segment_length )
+        eps = request_info.get( "eps", default_eps )
+        num_trials = request_info.get( "num_trials", default_num_trials )
+        
         channel_id = request_info.get( "channel_id", 0 )
         adobe_audition_compatible = request_info.get( "adobe_audition_compatible", False )
         
