@@ -364,14 +364,17 @@ class SegmenterBase:
                        time_per_frame_for_voting = 0.001, ## for voting
                        consolidation_method = "clustering",
                        max_length = 448, 
-                       batch_size = 16, 
+                       batch_size = 4, 
                        num_trials = 3,
-                       num_beams = 4
+                       num_beams = 4,
+                       top_k = 1, 
+                       top_p = 1.0, 
+                       length_penalty = 1.0
                ):
         tic1 = time.time()
         sliced_audios_features = self.get_sliced_audios_features( audio, sr, min_frequency, spec_time_step, num_trials)
         tic2 = time.time()
-        generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams )
+        generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, length_penalty )
         tic3 = time.time()
         final_prediction = self.parse_generation( 
             generated_text_list, sliced_audios_features,
@@ -515,24 +518,21 @@ class WhisperSegmenter(SegmenterBase):
         self.inverse_cluster_codebook = { cluster_id:cluster for cluster, cluster_id in self.cluster_codebook.items() }
                 
 
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams ):
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0 ):
         generated_text_list = []
-        
-        generation_kwargs = {
-            "top_k": 0.0,
-            "top_p": 1.0,
-            "do_sample": False,
-            "pad_token_id": self.tokenizer.pad_token_id,
-            "eos_token_id": self.tokenizer.eos_token_id,
-            "max_length":max_length,
-            "num_beams":num_beams
-        }
         
         for pos in range( 0, len(sliced_audios_features), batch_size ):
             input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(self.device)
             generated_ids = self.model.generate( inputs = input_features,  
                                                  decoder_input_ids = torch.LongTensor([ self.tokenizer.convert_tokens_to_ids( [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"] ) for _ in range( input_features.size(0) )]).to(self.device),
-                                                 **generation_kwargs
+                                                 pad_token_id = self.tokenizer.pad_token_id,
+                                                 eos_token_id = self.tokenizer.eos_token_id,
+                                                 max_length = max_length,
+                                                 num_beams = num_beams,
+                                                 do_sample = num_beams == 1,
+                                                 top_k = top_k,
+                                                 top_p = top_p,
+                                                 length_penalty = length_penalty
                                                )
             generated_text_batch = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
             generated_text_list += generated_text_batch
@@ -562,7 +562,7 @@ class WhisperSegmenterFast(SegmenterBase):
         self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
             
 
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams):
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0):
         generated_text_list = []
         for pos in range( 0, len(sliced_audios_features), batch_size ):
             
@@ -576,8 +576,12 @@ class WhisperSegmenterFast(SegmenterBase):
                 [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"]
             )
             ## the ctranslate converted model typically requires a larger max length than the one required by the original huggingface model, so we set max_length to a large value.
+            ## Note Ctranslate Whisper does not support top_p sampling
             model_output = self.model.generate(features, [ prompt for _ in range(actual_batch_size) ], 
-                                                 max_length = max_length, beam_size = num_beams )
+                                                 max_length = max_length, beam_size = num_beams,
+                                                 sampling_topk = top_k,
+                                                 length_penalty = length_penalty
+                                              )
             generated_text_batch = []
             for item in model_output:
                 try:
