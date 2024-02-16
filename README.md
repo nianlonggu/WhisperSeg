@@ -8,19 +8,39 @@ We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Au
 *Accepted to the 2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP 2024)*
 
 ## Install Environment
+### Method 1: Install using environment.yml
+```bash
+conda env create -f environment.yml
+```
+### Method 2: Install via pip
 ```bash
 conda create -n wseg python=3.10 -y
 conda activate wseg
-```
-On Linux
-```bash
 pip install -r requirements.txt
 conda install -c pypi cudnn -y
 ```
-On Windows (change from bitsandbytes to bitsandbytes-windows to avoid the error caused by bitsandbytes)
+
+**NOTE:** For method 1 and 2, if running WhisperSeg on windows, one need to further uninstall 'bitsandbytes' by 
+```bash
+pip uninstall bitsandbytes
 ```
-pip install -r requirements_windows.txt
-conda install -c pypi cudnn -y
+and then install 'bitsandbytes-windows==0.37.5'
+```bash
+pip install bitsandbytes-windows==0.37.5
+```
+
+### Method 3 (only for Linux): 
+Directly download the packed anaconda environment at https://huggingface.co/datasets/nccratliri/whisperseg-conda-env/blob/main/wseg.tar.gz
+uncompress it by
+```bash
+mkdir wseg
+tar -xzvf wseg.tar.gz -C wseg/
+```
+and put the unzipped folder 'wseg' to the path '~/anaconda3/envs/' (or ~/miniconda3/envs/). 
+
+Then open a new terminal, you can activate the 'wseg' environment by 
+```bash
+conda activate wseg
 ```
 
 ## Documentation
