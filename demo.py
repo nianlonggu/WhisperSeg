@@ -87,7 +87,7 @@ def segment( audio_file_handle, audio_info, segmenter ):
     if len(audio.shape) == 2:
         audio = audio[channel_id]
     audio_duration = len(audio) / sr
-    audio_info.text( "Length of the audio: %.2f s\nThis may take around %d minutes to segment ..." %( len(audio)/sr, int( np.ceil( audio_duration / 3 / 60 ) ) ) )
+    audio_info.text( "Length of the audio: %.2f s\nThis may take around %d minutes to segment ..." %( len(audio)/sr, int( np.ceil( audio_duration / 3 / len(args.device_ids) / 60 ) ) ) )
             
     ### segment the audio
     prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
