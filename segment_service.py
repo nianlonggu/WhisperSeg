@@ -134,14 +134,15 @@ if __name__ == '__main__':
     parser.add_argument("--model_path")
     parser.add_argument("--config_file_path", help="The file for recommended segment parameters of different species.", default="config/segment_config.json")
     parser.add_argument("--device", help="cpu or cuda", default = "cuda")
+    parser.add_argument("--device_ids", help="a list of GPU ids", type = int, nargs = "+", default = [0,])
     parser.add_argument("--batch_size", default=8, type=int)
     args = parser.parse_args()
     
     try:
-        segmenter = WhisperSegmenterFast( args.model_path, device = args.device )
+        segmenter = WhisperSegmenterFast( args.model_path, device = args.device, device_ids = args.device_ids )
         print("The loaded model is the Ctranslated version.")
     except:
-        segmenter = WhisperSegmenter( args.model_path, device = args.device )
+        segmenter = WhisperSegmenter( args.model_path, device = args.device, device_ids = args.device_ids )
         print("The loaded model is the original huggingface version.")
     
     sem = threading.Semaphore()

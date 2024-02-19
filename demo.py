@@ -46,10 +46,10 @@ def seconds_to_decimal( seconds ):
 @st.cache_resource
 def load_segmenter():
     try:
-        segmenter = WhisperSegmenterFast( args.model_path, device = args.device )
+        segmenter = WhisperSegmenterFast( args.model_path, device = args.device, device_ids = args.device_ids )
         print("The loaded model is the Ctranslated version.")
     except:
-        segmenter = WhisperSegmenter( args.model_path, device = args.device )
+        segmenter = WhisperSegmenter( args.model_path, device = args.device, device_ids = args.device_ids )
         print("The loaded model is the original huggingface version.")
     return segmenter
 
@@ -58,6 +58,7 @@ parser = argparse.ArgumentParser(description='App external parameters')
 parser.add_argument('--segment_config_path', default = "config/segment_config.json")
 parser.add_argument('--model_path')
 parser.add_argument('--device', default = "cuda")
+parser.add_argument("--device_ids", help="a list of GPU ids", type = int, nargs = "+", default = [0,])
 try:
     args = parser.parse_args()
 except SystemExit as e:

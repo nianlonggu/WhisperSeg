@@ -7,13 +7,14 @@ This enables an easy implementation of calling WhisperSeg in Matlab and is essen
 ## Step 1: Starting the segmenting service
 In a terminal, go to the main folder of this repository, and run the following command:
 ```
-python segment_service.py --flask_port 8050 --model_path nccratliri/whisperseg-large-ms-ct2 --device cuda
+python segment_service.py --flask_port 8050 --model_path nccratliri/whisperseg-large-ms-ct2 --device cuda --device_ids 0
 ```
 
 Illustration of the parameters:
 * flask_port: the port that this service will keep listening to. Requests that are sent to this port will be handled by this service
 * model_path: the path to the WhisperSeg model. This model can either be original huggingface model, e.g., nccratliri/whisperseg-large-ms, or CTranslate converted model, e.g., nccratliri/whisperseg-large-ms-ct2. If you choose to use the Ctranslate converted model, please make sure the converted model exists. If you have a different trained WhisperSeg checkpoint, replace "nccratliri/whisperseg-large-ms-ct2" with the path to the checkpoint.
 * device: where to run the WhisperSeg. It can be cuda or cpu. By default we run the model on cuda
+* device_ids: The GPU indices to run the model. For example if there are two GPUs, set "--device_ids 0 1"
 
 **Note**:
 The terminal that runs this service needs to be kept open. On Linux system's terminal, one can first create a new screen and run the service in the created screen, to allow the service runing in the background.

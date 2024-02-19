@@ -170,7 +170,7 @@ if __name__ == "__main__":
     
     model = nn.DataParallel( model, args.gpu_list )
 
-    segmenter = WhisperSegmenter( model = model, tokenizer = tokenizer )
+    segmenter = WhisperSegmenterForEval( model = model, tokenizer = tokenizer )
 
     if args.clear_cluster_codebook:
         segmenter.update_cluster_codebook( {} )

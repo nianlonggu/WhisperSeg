@@ -26,6 +26,7 @@ from huggingface_hub import snapshot_download
 import hashlib
 import os
 import shutil
+import threading
 
 def download_model( model_path, ignore_cache = False ):
     ## This model path is a local folder path
@@ -145,9 +146,28 @@ class SegmenterBase:
                 assert input_features.shape == (80, self.total_spec_columns)                
                 sliced_audios_features.append( ( trial_id, offset_time, input_features, len(audio_clip)/sr ) )
         return sliced_audios_features
-    
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams):
-        pass
+        
+    ## This is used for WhisperSegmenter and WhisperSegmenterFast, not for WhisperSegmenterForEval
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0 ):
+        generated_texts_dict = {}
+        all_threads = []
+        num_examples_per_thread = int(np.ceil( len( sliced_audios_features ) / len( self.device_list ) ))
+        for thread_id, pos in enumerate(range( 0, len( sliced_audios_features ), num_examples_per_thread )):
+            t = threading.Thread( target = self.generate_segment_text_core, 
+                                  args = ( sliced_audios_features[pos:pos+num_examples_per_thread],
+                                           batch_size, max_length, num_beams, top_k, top_p, 
+                                           length_penalty, generated_texts_dict, thread_id
+                                         )
+                                )
+            t.start()
+            all_threads.append(t)
+        for t in all_threads:
+            t.join()
+            
+        generated_text_list = []
+        for thread_id in sorted( list( generated_texts_dict.keys() ) ):
+            generated_text_list += generated_texts_dict[thread_id]
+        return generated_text_list  
     
     def extract_segments( self, text, spec_time_step ):
         inverse_cluster_codebook = { v:k for k,v in self.cluster_codebook.items()}   
@@ -489,7 +509,7 @@ class SegmenterBase:
         return TP, P_in_pred, P_in_label, precision, recall, f1
     
     
-class WhisperSegmenter(SegmenterBase):        
+class WhisperSegmenterForEval(SegmenterBase):        
     def __init__(self, model_path = None, device = None, model = None, tokenizer = None):
         super().__init__()
         if model_path is not None:
@@ -537,47 +557,94 @@ class WhisperSegmenter(SegmenterBase):
             generated_text_batch = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
             generated_text_list += generated_text_batch
         return generated_text_list
-
-
+    
+    
+class WhisperSegmenter(SegmenterBase):        
+    def __init__(self, model_path, device = None, device_ids = [ 0,] ):
+        super().__init__()
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            
+        if device == "cpu":
+            self.device_list = [ torch.device("cpu") ]
+            self.model_list = [ WhisperForConditionalGeneration.from_pretrained( model_path ) ]
+        else:
+            self.device_list = [ torch.device("cuda", gpu) for gpu in device_ids ]
+            self.model_list = [ WhisperForConditionalGeneration.from_pretrained( model_path ).to(device) for device in self.device_list ]
+        self.tokenizer_list = [ WhisperTokenizer.from_pretrained(model_path, language = "english" ) for _ in self.device_list ]
+        
+        self.total_spec_columns = self.model_list[0].config.total_spec_columns
+        self.cluster_codebook = self.model_list[0].config.cluster_codebook
+        self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }         
+        
+        
+    def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
+                                          length_penalty,  generated_texts_dict, thread_id ):
+        device = self.device_list[thread_id]
+        model = self.model_list[thread_id]
+        tokenizer = self.tokenizer_list[thread_id]
+        generated_text_list = []
+        for pos in range( 0, len(sliced_audios_features), batch_size ):
+            input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(device)
+            generated_ids = model.generate( inputs = input_features,  
+                                                 decoder_input_ids = torch.LongTensor([ tokenizer.convert_tokens_to_ids( [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"] ) 
+                                                                                          for _ in range( input_features.size(0) )]).to(device),
+                                                 pad_token_id = tokenizer.pad_token_id,
+                                                 eos_token_id = tokenizer.eos_token_id,
+                                                 max_length = max_length,
+                                                 num_beams = num_beams,
+                                                 do_sample = num_beams == 1,
+                                                 top_k = top_k,
+                                                 top_p = top_p,
+                                                 length_penalty = length_penalty
+                                               )
+            generated_text_batch = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+            generated_text_list += generated_text_batch
+        generated_texts_dict[thread_id] = generated_text_list
+    
 class WhisperSegmenterFast(SegmenterBase):
-    def __init__(self, model_path, device=None, ignore_cache = False ):
+    def __init__(self, model_path, device=None, device_ids = [ 0,] ):
         super().__init__()
         
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
+        model_path = download_model( model_path, ignore_cache = False )
+            
         if device == "cpu":
             compute_type = "float32"
+            self.device_list = [ 0,]
+            self.model_list = [ ctranslate2.models.Whisper(model_path, device = device, compute_type = compute_type) ]
         else:
             compute_type = "float16"
-
-        model_path = download_model( model_path, ignore_cache = ignore_cache )
+            self.device_list = device_ids
+            self.model_list = [ ctranslate2.models.Whisper(model_path, device = device, device_index = idx, compute_type = compute_type) for idx in device_ids ]
+        self.tokenizer_list = [ WhisperTokenizer.from_pretrained(model_path+"/hf_model", language = "english" ) for _ in self.device_list ]
         
-        self.model = ctranslate2.models.Whisper(model_path, device = device, compute_type = compute_type)
-        self.tokenizer = WhisperTokenizer.from_pretrained(model_path+"/hf_model", language = "english" )
-        
-        model_config = json.load(open(model_path+"/hf_model"+"/config.json"))
-                
+        model_config = json.load(open(model_path+"/hf_model"+"/config.json"))        
         self.total_spec_columns = model_config["total_spec_columns"]
         self.cluster_codebook = model_config["cluster_codebook"]
         self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
-            
 
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0):
+    def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
+                                          length_penalty, generated_texts_dict, thread_id ):
+        
+        tokenizer = self.tokenizer_list[thread_id]
+        model = self.model_list[thread_id]
         generated_text_list = []
         for pos in range( 0, len(sliced_audios_features), batch_size ):
             
             """ 
-            This is the code if self.model is the converted ctranslate model
+            This is the code if model is the converted ctranslate model
             """
             sliced_audios_features_batch = sliced_audios_features[pos:pos+batch_size]
             actual_batch_size = len(sliced_audios_features_batch)
             features = ctranslate2.StorageView.from_array(np.asarray([ item[2] for item in sliced_audios_features_batch ]))
-            prompt = self.tokenizer.convert_tokens_to_ids(
+            prompt = tokenizer.convert_tokens_to_ids(
                 [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"]
             )
             ## the ctranslate converted model typically requires a larger max length than the one required by the original huggingface model, so we set max_length to a large value.
             ## Note Ctranslate Whisper does not support top_p sampling
-            model_output = self.model.generate(features, [ prompt for _ in range(actual_batch_size) ], 
+            model_output = model.generate(features, [ prompt for _ in range(actual_batch_size) ], 
                                                  max_length = max_length, beam_size = num_beams,
                                                  sampling_topk = top_k,
                                                  length_penalty = length_penalty
@@ -592,6 +659,5 @@ class WhisperSegmenterFast(SegmenterBase):
                 
             generated_text_list += generated_text_batch
         
-        return generated_text_list
-    
+        generated_texts_dict[thread_id] = generated_text_list
     
