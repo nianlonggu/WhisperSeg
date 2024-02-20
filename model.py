@@ -148,7 +148,7 @@ class SegmenterBase:
         return sliced_audios_features
         
     ## This is used for WhisperSegmenter and WhisperSegmenterFast, not for WhisperSegmenterForEval
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0 ):
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0, status_monitor = None ):
         generated_texts_dict = {}
         all_threads = []
         num_examples_per_thread = int(np.ceil( len( sliced_audios_features ) / len( self.device_list ) ))
@@ -156,7 +156,8 @@ class SegmenterBase:
             t = threading.Thread( target = self.generate_segment_text_core, 
                                   args = ( sliced_audios_features[pos:pos+num_examples_per_thread],
                                            batch_size, max_length, num_beams, top_k, top_p, 
-                                           length_penalty, generated_texts_dict, thread_id
+                                           length_penalty, generated_texts_dict, thread_id,
+                                           status_monitor if thread_id == 0 else None   ## pass the status_monitor only to the first thread
                                          )
                                 )
             t.start()
@@ -389,12 +390,13 @@ class SegmenterBase:
                        num_beams = 4,
                        top_k = 1, 
                        top_p = 1.0, 
-                       length_penalty = 1.0
+                       length_penalty = 1.0,
+                       status_monitor = None 
                ):
         tic1 = time.time()
         sliced_audios_features = self.get_sliced_audios_features( audio, sr, min_frequency, spec_time_step, num_trials)
         tic2 = time.time()
-        generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, length_penalty )
+        generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, length_penalty, status_monitor )
         tic3 = time.time()
         final_prediction = self.parse_generation( 
             generated_text_list, sliced_audios_features,
@@ -579,7 +581,7 @@ class WhisperSegmenter(SegmenterBase):
         
         
     def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
-                                          length_penalty,  generated_texts_dict, thread_id ):
+                                          length_penalty,  generated_texts_dict, thread_id, status_monitor = None ):
         device = self.device_list[thread_id]
         model = self.model_list[thread_id]
         tokenizer = self.tokenizer_list[thread_id]
@@ -600,6 +602,13 @@ class WhisperSegmenter(SegmenterBase):
                                                )
             generated_text_batch = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
             generated_text_list += generated_text_batch
+            
+            ### if status_monitor is not None, update the progress in percentage
+            ### status_monitor is a dictionary which contains the key "progress" 
+            if status_monitor is not None:
+                progress_percent =  int( 100 * min( 1, (pos+batch_size) / len(sliced_audios_features) ) )
+                status_monitor["progress"] = progress_percent
+            
         generated_texts_dict[thread_id] = generated_text_list
     
 class WhisperSegmenterFast(SegmenterBase):
@@ -626,7 +635,7 @@ class WhisperSegmenterFast(SegmenterBase):
         self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
 
     def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
-                                          length_penalty, generated_texts_dict, thread_id ):
+                                          length_penalty, generated_texts_dict, thread_id, status_monitor = None ):
         
         tokenizer = self.tokenizer_list[thread_id]
         model = self.model_list[thread_id]
@@ -658,6 +667,14 @@ class WhisperSegmenterFast(SegmenterBase):
                 generated_text_batch.append(gen_text)
                 
             generated_text_list += generated_text_batch
+            
+            
+            ### if status_monitor is not None, update the progress in percentage
+            ### status_monitor is a dictionary which contains the key "progress" 
+            if status_monitor is not None:
+                progress_percent =  int( 100 * min( 1, (pos+batch_size) / len(sliced_audios_features) ) )
+                status_monitor["progress"] = progress_percent
+            
         
         generated_texts_dict[thread_id] = generated_text_list
     
