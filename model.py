@@ -143,7 +143,18 @@ class SegmenterBase:
                 audio_clip_padded = np.concatenate([ audio_clip, np.zeros( audio_clip_length - len(audio_clip), dtype = np.float32 ) ], axis = 0 )
             
                 input_features = feature_extractor(audio_clip_padded, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
-                assert input_features.shape == (80, self.total_spec_columns)                
+                input_features = input_features[:,:self.total_spec_columns]
+                
+                if input_features.shape[1] > 0:
+                    min_spec_value = input_features.min()
+                else:
+                    min_spec_value = 0
+                # if input_features.shape[1] < self.total_spec_columns:
+                input_features = np.concatenate( [ input_features, 
+                                                       min_spec_value * np.ones( ( input_features.shape[0], self.total_spec_columns - input_features.shape[1] ) )  ], axis = 1 ).astype(np.float32)
+                
+                assert input_features.shape[1] == self.total_spec_columns     
+
                 sliced_audios_features.append( ( trial_id, offset_time, input_features, len(audio_clip)/sr ) )
         return sliced_audios_features
         

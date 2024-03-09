@@ -19,6 +19,8 @@ class WhisperSegFeatureExtractor( WhisperFeatureExtractor ):
     def __init__(self, sr, spec_time_step, min_frequency = None, max_frequency = None, chunk_length = 30 ):
         
         hop_length = int( spec_time_step * sr )
+        if hop_length != spec_time_step * sr:
+            print("Warning: spec_time_step * sr must be an integer. Consider changing the sampling rate sr.")
         
         if sr <= 32000:
             n_fft = 512
