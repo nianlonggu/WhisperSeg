@@ -61,6 +61,7 @@ parser.add_argument('--segment_config_path', default = "config/segment_config.js
 parser.add_argument('--model_path')
 parser.add_argument('--device', default = "cuda")
 parser.add_argument("--device_ids", help="a list of GPU ids", type = int, nargs = "+", default = [0,])
+parser.add_argument("--species", help="main target species", default = None)
 try:
     args = parser.parse_args()
 except SystemExit as e:
@@ -118,9 +119,9 @@ def init_session_state():
     if "segment_config" not in st.session_state:
         st.session_state["segment_config"] = json.load(open(args.segment_config_path))
         st.session_state["species_list"] = sorted(list(st.session_state["segment_config"].keys())) + ["Other"]
-        #if "meerkat" in st.session_state["species_list"]:
-        #    st.session_state["species_list"].remove("meerkat")
-        #    st.session_state["species_list"] = ["meerkat"]  + st.session_state["species_list"]
+        if args.species is not None and args.species in st.session_state["species_list"]:
+           st.session_state["species_list"].remove(args.species)
+           st.session_state["species_list"] = [args.species]  + st.session_state["species_list"]
     if "segmentation_csv_name" not in st.session_state:
         st.session_state["segmentation_csv_name"] = None
     if "segmentation_df" not in st.session_state:
