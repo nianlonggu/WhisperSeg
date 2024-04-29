@@ -551,7 +551,7 @@ class WhisperSegmenterForEval(SegmenterBase):
         self.inverse_cluster_codebook = { cluster_id:cluster for cluster, cluster_id in self.cluster_codebook.items() }
                 
 
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0 ):
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0, status_monitor = None ):
         generated_text_list = []
         
         for pos in range( 0, len(sliced_audios_features), batch_size ):
