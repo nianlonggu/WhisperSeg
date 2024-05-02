@@ -89,7 +89,7 @@ def segment(segmenter, audio_data, channel_id, sr, min_frequency, spec_time_step
         Start_list = [ seconds_to_decimal( seconds ) for seconds in prediction["onset"] ] 
         Duration_list = [ seconds_to_decimal( end - start ) for start, end in zip( prediction["onset"], prediction["offset"] )  ]
         Format_list = [ "decimal" ] * len(Start_list)
-        Type_list = [ "Cue" ] * len(Start_list)
+        Type_list = list(prediction["cluster"])  #[ "Cue" ] * len(Start_list)
         Description_list = [ "" for _ in range(len(Start_list))]
         Name_list = [ "" for _ in range( len(Start_list) )  ]
         
