@@ -122,7 +122,7 @@ class SegmenterBase:
         clip_duration = self.total_spec_columns * spec_time_step
         
         max_num_padding_samples = int( clip_duration * sr )
-        audio_left_pad = np.zeros( max_num_padding_samples, dtype = np.float32 )
+        audio_left_pad = np.zeros( ( audio.shape[0], max_num_padding_samples), dtype = np.float32 )
         audio_clip_length = int(clip_duration * sr)
         
         sliced_audios_features = []
@@ -130,32 +130,36 @@ class SegmenterBase:
             
             padding_time = np.round( clip_duration * trial_id / num_trials / spec_time_step ) * spec_time_step
             num_padding_samples = int( padding_time * sr )
-            audio_padded = np.concatenate( [ audio_left_pad[ len(audio_left_pad) - num_padding_samples: ],
+            audio_padded = np.concatenate( [ audio_left_pad[:, audio_left_pad.shape[1] - num_padding_samples: ],
                                              audio
-                                           ], axis = 0 
+                                           ], axis = 1 
                                          )
             
             ## This loop must be executed once even for zero length audio
-            for pos in range( 0, max(len(audio_padded), 1), audio_clip_length ):
+            for pos in range( 0, max(audio_padded.shape[1], 1), audio_clip_length ):
                 offset_time = pos / sr - padding_time
                 
-                audio_clip = audio_padded[pos:pos+audio_clip_length]
-                audio_clip_padded = np.concatenate([ audio_clip, np.zeros( audio_clip_length - len(audio_clip), dtype = np.float32 ) ], axis = 0 )
+                audio_clip = audio_padded[:,pos:pos+audio_clip_length]
+                audio_clip_padded = np.concatenate([ audio_clip, np.zeros( ( audio_clip.shape[0], audio_clip_length - audio_clip.shape[1]), dtype = np.float32 ) ], axis = 1 )
             
-                input_features = feature_extractor(audio_clip_padded, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
-                input_features = input_features[:,:self.total_spec_columns]
-                
-                if input_features.shape[1] > 0:
-                    min_spec_value = input_features.min()
-                else:
-                    min_spec_value = 0
-                # if input_features.shape[1] < self.total_spec_columns:
-                input_features = np.concatenate( [ input_features, 
-                                                       min_spec_value * np.ones( ( input_features.shape[0], self.total_spec_columns - input_features.shape[1] ) )  ], axis = 1 ).astype(np.float32)
-                
-                assert input_features.shape[1] == self.total_spec_columns     
+                all_input_features = []
+                for audio_clip_idx in range( audio_clip_padded.shape[0] ):
+                    
+                    input_features = feature_extractor(audio_clip_padded[audio_clip_idx], 
+                                                       sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
+                    input_features = input_features[:,:self.total_spec_columns]
+                    
+                    if input_features.shape[1] > 0:
+                        min_spec_value = input_features.min()
+                    else:
+                        min_spec_value = 0
+                    # if input_features.shape[1] < self.total_spec_columns:
+                    input_features = np.concatenate( [ input_features, 
+                                                        min_spec_value * np.ones( ( input_features.shape[0], self.total_spec_columns - input_features.shape[1] ) )  ], axis = 1 ).astype(np.float32)
+                    assert input_features.shape[1] == self.total_spec_columns
+                    all_input_features.append( input_features )
 
-                sliced_audios_features.append( ( trial_id, offset_time, input_features, len(audio_clip)/sr ) )
+                sliced_audios_features.append( ( trial_id, offset_time, all_input_features, audio_clip.shape[1]/sr ) )
         return sliced_audios_features
         
     ## This is used for WhisperSegmenter and WhisperSegmenterFast, not for WhisperSegmenterForEval
@@ -212,6 +216,7 @@ class SegmenterBase:
         ## convert generated text to on_offsets
         on_offset_list_of_trial = {}
         for count, generated_text in enumerate(generated_text_list):
+            
             trial_id, offset_time, _, duration = sliced_audios_features[count]
 
             if trial_id not in on_offset_list_of_trial:
@@ -409,10 +414,11 @@ class SegmenterBase:
         tic2 = time.time()
         generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, length_penalty, status_monitor )
         tic3 = time.time()
+        
         final_prediction = self.parse_generation( 
             generated_text_list, sliced_audios_features,
                          min_segment_length, 
-                         len(audio)/sr,
+                         audio.shape[1] /sr,
                          spec_time_step,
                          num_trials,
                          eps, time_per_frame_for_voting,
@@ -420,9 +426,6 @@ class SegmenterBase:
                         )
         tic4 = time.time()
         
-        # print("get sliced audio features time:",tic2 - tic1)
-        # print("generation time:",tic3 - tic2)
-        # print("parsing time:",tic4 - tic3)
         
         return final_prediction
             
@@ -434,11 +437,10 @@ class SegmenterBase:
         n_positive_in_label = len(label_on_offset_list)
         
         n_true_positive = 0
-        for pred_onset, pred_offset, pred_cluster in prediction_on_offset_list:
+        for pred_onset, pred_offset in prediction_on_offset_list:
             is_matched = False
-            for count, (label_onset, label_offset, label_cluster) in enumerate( label_on_offset_list ):
-                if np.abs( pred_onset -  label_onset )<=tolerance and np.abs( pred_offset - label_offset )<= tolerance and pred_cluster == label_cluster:
-                    # print( (pred_onset, pred_offset), (label_onset, label_offset) )
+            for count, (label_onset, label_offset) in enumerate( label_on_offset_list ):
+                if np.abs( pred_onset - label_onset )<=tolerance and np.abs( pred_offset - label_offset )<= tolerance:
                     n_true_positive += 1
                     is_matched = True
                     break  # early stop for the predicted value
@@ -453,12 +455,12 @@ class SegmenterBase:
         prediction_on_offset_list = []
         for pos in range(len(prediction["onset"])):
             if target_cluster is None or str(target_cluster) == str(prediction["cluster"][pos]):
-                prediction_on_offset_list.append([ prediction["onset"][pos], prediction["offset"][pos], str(prediction["cluster"][pos]) ])
+                prediction_on_offset_list.append([ prediction["onset"][pos], prediction["offset"][pos] ])
         
         label_on_offset_list = []
         for pos in range(len(label["onset"])):
             if target_cluster is None or str(target_cluster) == str( label["cluster"][pos] ):
-                label_on_offset_list.append([ label["onset"][pos], label["offset"][pos], str(label["cluster"][pos]) ])
+                label_on_offset_list.append([ label["onset"][pos], label["offset"][pos] ])
 
         if target_cluster is not None and len(label_on_offset_list) == 0:
             print("Warning: the specified target cluster '%s' does not exist in the ground-truth labels."%(str(target_cluster)))
@@ -555,7 +557,12 @@ class WhisperSegmenterForEval(SegmenterBase):
         generated_text_list = []
         
         for pos in range( 0, len(sliced_audios_features), batch_size ):
-            input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(self.device)
+
+            
+            ### debugging here, merge the three spectrograms into one
+            input_features = torch.from_numpy( np.asarray([ np.concatenate(item[2], axis = 0)[::len(item[2])]  for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(self.device)
+
+            
             generated_ids = self.model.generate( inputs = input_features,  
                                                  decoder_input_ids = torch.LongTensor([ self.tokenizer.convert_tokens_to_ids( [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"] ) for _ in range( input_features.size(0) )]).to(self.device),
                                                  pad_token_id = self.tokenizer.pad_token_id,
@@ -598,7 +605,11 @@ class WhisperSegmenter(SegmenterBase):
         tokenizer = self.tokenizer_list[thread_id]
         generated_text_list = []
         for pos in range( 0, len(sliced_audios_features), batch_size ):
-            input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(device)
+
+            ### debugging here, merge the three spectrograms into one
+            input_features = torch.from_numpy( np.asarray([ np.concatenate(item[2], axis = 0)[::len(item[2])] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(device)
+
+            
             generated_ids = model.generate( inputs = input_features,  
                                                  decoder_input_ids = torch.LongTensor([ tokenizer.convert_tokens_to_ids( [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"] ) 
                                                                                           for _ in range( input_features.size(0) )]).to(device),
@@ -658,7 +669,10 @@ class WhisperSegmenterFast(SegmenterBase):
             """
             sliced_audios_features_batch = sliced_audios_features[pos:pos+batch_size]
             actual_batch_size = len(sliced_audios_features_batch)
-            features = ctranslate2.StorageView.from_array(np.asarray([ item[2] for item in sliced_audios_features_batch ]))
+
+            ### debugging here, merge the three spectrograms into one
+            features = ctranslate2.StorageView.from_array(np.asarray([ np.concatenate(item[2], axis = 0)[::len(item[2])] for item in sliced_audios_features_batch ]))
+            
             prompt = tokenizer.convert_tokens_to_ids(
                 [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"]
             )
