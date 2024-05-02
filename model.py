@@ -434,10 +434,10 @@ class SegmenterBase:
         n_positive_in_label = len(label_on_offset_list)
         
         n_true_positive = 0
-        for pred_onset, pred_offset in prediction_on_offset_list:
+        for pred_onset, pred_offset, pred_cluster in prediction_on_offset_list:
             is_matched = False
-            for count, (label_onset, label_offset) in enumerate( label_on_offset_list ):
-                if np.abs( pred_onset -  label_onset )<=tolerance and np.abs( pred_offset - label_offset )<= tolerance:
+            for count, (label_onset, label_offset, label_cluster) in enumerate( label_on_offset_list ):
+                if np.abs( pred_onset -  label_onset )<=tolerance and np.abs( pred_offset - label_offset )<= tolerance and pred_cluster == label_cluster:
                     # print( (pred_onset, pred_offset), (label_onset, label_offset) )
                     n_true_positive += 1
                     is_matched = True
@@ -453,12 +453,12 @@ class SegmenterBase:
         prediction_on_offset_list = []
         for pos in range(len(prediction["onset"])):
             if target_cluster is None or str(target_cluster) == str(prediction["cluster"][pos]):
-                prediction_on_offset_list.append([ prediction["onset"][pos], prediction["offset"][pos] ])
+                prediction_on_offset_list.append([ prediction["onset"][pos], prediction["offset"][pos], str(prediction["cluster"][pos]) ])
         
         label_on_offset_list = []
         for pos in range(len(label["onset"])):
             if target_cluster is None or str(target_cluster) == str( label["cluster"][pos] ):
-                label_on_offset_list.append([ label["onset"][pos], label["offset"][pos] ])
+                label_on_offset_list.append([ label["onset"][pos], label["offset"][pos], str(label["cluster"][pos]) ])
 
         if target_cluster is not None and len(label_on_offset_list) == 0:
             print("Warning: the specified target cluster '%s' does not exist in the ground-truth labels."%(str(target_cluster)))
