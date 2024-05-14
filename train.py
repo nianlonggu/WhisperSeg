@@ -98,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("--initial_model_path" )
     parser.add_argument("--model_folder" )
     parser.add_argument("--train_dataset_folder" )
-    parser.add_argument("--mask_rate", type = float, default = 0.5 )
+    parser.add_argument("--mask_rate", type = float, default = 0.8 )
     parser.add_argument("--n_device", type = int, default = 1 )
     parser.add_argument("--gpu_list", type = int, nargs = "+", default = None )
     parser.add_argument("--project", default = "whisperseg-multi-species" )
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument("--validate_per_epoch", type = int, default = 0 )
     parser.add_argument("--save_every", type = int, default = None )
     parser.add_argument("--save_per_epoch", type = int, default = 0 )
-    parser.add_argument("--max_num_epochs", type = int, default = 3 )
+    parser.add_argument("--max_num_epochs", type = int, default = 5 )
     parser.add_argument("--max_num_iterations", type = int, default = None )
     parser.add_argument("--val_ratio", type = float, default = 0.0 )
     
