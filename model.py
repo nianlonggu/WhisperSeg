@@ -703,3 +703,68 @@ class WhisperSegmenterFast(SegmenterBase):
         
         generated_texts_dict[thread_id] = generated_text_list
     
+
+class MultiChannelWhisperSeg:
+    def __init__(self, model_path, device=None, device_ids = [ 0,] ):
+        try:
+            segmenter = WhisperSegmenterFast(  model_path = model_path, device=device, device_ids = device_ids )
+        except:
+            segmenter = WhisperSegmenter(  model_path = model_path, device=device, device_ids = device_ids )
+        self.segmenter = segmenter
+
+    def print_progress_bar(self, status_monitor, title = "", length=50):
+        while True:
+            if status_monitor.get("finished", False):
+                break
+            percent = status_monitor.get("progress", 0)
+            bar_length = int(length * percent / 100)
+            bar = '■' * bar_length + '-' * (length - bar_length)
+            print(f'{title} [{bar}] {percent:.2f}%', flush = False, end = "\r")
+            time.sleep( 0.02 )
+        print()
+            
+    def segment(self, radio_channels: list, mic_channels: list, sr: int,
+                      min_frequency = 0,
+                      spec_time_step = 0.0025,
+                      min_segment_length = 0.005,
+                      eps = 0.02,  ## for DBSCAN clustering
+                      time_per_frame_for_voting = 0.001, ## for voting
+                      consolidation_method = "clustering",
+                      max_length = 448, 
+                      batch_size = 4, 
+                      num_trials = 3,
+                      num_beams = 4,
+                      top_k = 1, 
+                      top_p = 1.0, 
+                      length_penalty = 1.0,
+               ):
+        audio_len_list = []
+        for item in radio_channels + mic_channels:
+            assert len(item.shape) == 1, "Each audio channel must be one-dimensional!"
+            audio_len_list.append(len(item))
+        assert len(set(audio_len_list)) == 1, "All audio channels must have the same length!"
+        assert len(radio_channels) > 0 and len(mic_channels) > 0
+
+        predictions = []
+        for channel_idx in range( len(radio_channels) ):
+            target_radio = radio_channels[channel_idx]
+            non_target_audio = np.zeros_like(target_radio)
+            for idx in range( len(radio_channels) ):
+                if idx != channel_idx:
+                    non_target_audio += radio_channels[idx]
+            mic_audio = mic_channels[0]
+            audio = np.asarray( [ target_radio, non_target_audio, mic_audio ] )
+
+            status_monitor = {}
+            t = threading.Thread( target = self.print_progress_bar, args = [status_monitor, "Segmenting radio channel %d"%( channel_idx ) ] )
+            t.start()
+            prediction = self.segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
+                       min_segment_length = min_segment_length, eps = eps, time_per_frame_for_voting = time_per_frame_for_voting,
+                       consolidation_method = consolidation_method, max_length = max_length, batch_size=batch_size,
+                       num_trials = num_trials, num_beams = num_beams, top_k = top_k, top_p = top_p, length_penalty = length_penalty,
+                       status_monitor = status_monitor
+                                          )
+            status_monitor["finished"] = True
+            t.join()
+            predictions.append( prediction )
+        return predictions

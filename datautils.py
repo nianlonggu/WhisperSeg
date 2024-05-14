@@ -10,6 +10,23 @@ from audio_utils import WhisperSegFeatureExtractor
 from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
 from glob import glob
 
+def random_mask(signal_length, mask_ratio):
+    # Calculate the total number of points to mask
+    total_mask_points = int(mask_ratio * signal_length)
+    
+    # Create an array of False (indicating unmasked)
+    mask = np.zeros(signal_length, dtype=bool)
+    
+    # Randomly choose mask start points and lengths
+    while total_mask_points > 0:
+        start = np.random.randint(0, signal_length)
+        # Randomly determine the length of this mask segment
+        segment_length = min(np.random.randint(1, total_mask_points + 1), signal_length - start)
+        mask[start:start + segment_length] = True
+        total_mask_points -= segment_length
+    
+    return mask
+
 # def get_audio_and_label_paths( folder ):
 #     wav_list = [ folder + "/" + fname for fname in os.listdir( folder ) if fname.endswith(".wav") ]
 #     audio_paths = []
@@ -515,7 +532,7 @@ def slice_audios_and_labels( audio_list, label_list, total_spec_columns ):
 
 
 class VocalSegDataset(Dataset):
-    def __init__(self, audio_list, label_list, tokenizer, max_length, total_spec_columns, species_codebook ):
+    def __init__(self, audio_list, label_list, tokenizer, max_length, total_spec_columns, species_codebook, mask_rate = 0. ):
         self.audio_list = audio_list
         self.label_list = label_list
         self.feature_extractor_bank = self.get_feature_extractor_bank( label_list )
@@ -523,6 +540,7 @@ class VocalSegDataset(Dataset):
         self.max_length = max_length
         self.total_spec_columns = total_spec_columns
         self.species_codebook = species_codebook
+        self.mask_rate = mask_rate
         
     def get_feature_extractor_bank(self, label_list ):
         feature_extractor_bank = {}
@@ -549,10 +567,43 @@ class VocalSegDataset(Dataset):
         feature_extractor = self.feature_extractor_bank[ "%s-%s-%s"%( str(sr), str(spec_time_step), str(min_frequency) ) ]
         
         num_samples_in_clip = int(np.round( self.total_spec_columns * spec_time_step * sr ))
-                    
-        clip_start = np.random.choice( min( num_samples_in_clip+1, audio.shape[1] - feature_extractor.n_fft + 1 ) )        
-        audio_clip = audio[:, clip_start: clip_start + num_samples_in_clip ]
-        
+        clip_start = np.random.choice( min( num_samples_in_clip+1, audio.shape[1] - feature_extractor.n_fft + 1 ) )       
+        audio_clip = audio[:, clip_start: clip_start + num_samples_in_clip ].copy()
+
+        ## data augumentation: randomly drop one channels (mask it to zeros)
+        # if np.random.rand() < self.mask_rate:
+        #     rand_channel_idx = np.random.choice( audio_clip.shape[0] )
+        #     audio_clip[rand_channel_idx] = 0.0
+
+        ## scheme 2: randomly introducing partitial mask
+        # for channel_idx in range( audio_clip.shape[0] ):
+        #     for _ in range(3):
+        #         if np.random.rand() < self.mask_rate:
+        #             mask_length = int( np.random.rand() * audio_clip.shape[1] * 1.5 )
+        #             random_offset = min(
+        #                  audio_clip.shape[1],
+        #                  max(0, int( np.random.rand() * audio_clip.shape[1] * 1.5 - 0.25 * audio_clip.shape[1] ) )
+        #             )
+        #             audio_clip[ channel_idx, random_offset:random_offset+mask_length ] = 0.0
+
+        ## scheme 3: randomly drop one channels (mask it to zeros)
+        if np.random.rand() < self.mask_rate:
+            rand_channel_idx = np.random.choice( audio_clip.shape[0]-1 )  ## do not add mask to mic channel
+            if np.random.rand() < 0.5:
+                audio_clip[rand_channel_idx] = 0.0
+            else:
+                mask = np.array( random_mask(audio_clip.shape[1], np.random.rand()) )
+                audio_clip[rand_channel_idx] = audio_clip[rand_channel_idx] * mask
+
+        # ## scheme 4: randomly drop one channels (mask it to zeros)
+        # if np.random.rand() < self.mask_rate:
+        #     rand_channel_idx = 0  ## only add mask to target channel, as the model most make mistakes here
+        #     if np.random.rand() < 0.5:
+        #         audio_clip[rand_channel_idx] = 0.0
+        #     else:
+        #         mask = np.array( random_mask(audio_clip.shape[1], np.random.rand()) )
+        #         audio_clip[rand_channel_idx] = audio_clip[rand_channel_idx] * mask
+                
         actual_clip_duration = audio_clip.shape[1] / sr
         start_time = clip_start / sr
         end_time = start_time + actual_clip_duration

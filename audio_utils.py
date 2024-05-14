@@ -78,7 +78,7 @@ class SpecViewer:
     def chunk_audio(self, audio, start_time, end_time, sr):
         start_idx = int( start_time * sr )
         end_idx = int( end_time * sr )
-        chunked_audio = audio[start_idx:end_idx]
+        chunked_audio = audio[:,start_idx:end_idx]
         return chunked_audio    
 
     def chunk_label(self, label, start_time, end_time ):
@@ -101,7 +101,10 @@ class SpecViewer:
             max_value = im.max()
         return (im -  min_value ) / max( max_value - min_value, 1e-12 )
 
-    def plot_spec_and_labels(self, offset, window_size, audio, prediction, label, sr, audio_file_name, feature_extractor, precision_bits , min_spec_value, max_spec_value, xticks_step_size ):
+    def plot_spec_and_labels(self, offset, window_size, audio, audio_channel_names,
+                             prediction, label, sr, audio_file_name, 
+                             feature_extractor, precision_bits , min_spec_value, max_spec_value, xticks_step_size,
+                            ):
         
         all_unique_clusters = sorted(list(set( list(label["cluster"]) + list(prediction["cluster"]) )))
         cluster_color_mapper = {}
@@ -118,8 +121,12 @@ class SpecViewer:
         label_chunked = self.chunk_label( label, start_time, end_time )
         prediction_chunked = self.chunk_label( prediction, start_time, end_time )
         
-        spec = feature_extractor( audio_chunked, sampling_rate=sr, padding = "do_not_pad" )["input_features"][0]
-                
+        # spec = feature_extractor( audio_chunked, sampling_rate=sr, padding = "do_not_pad" )["input_features"][0]
+        spec = []
+        for channel_idx in range( audio_chunked.shape[0] ):
+            spec.append( feature_extractor( audio_chunked[channel_idx], sampling_rate=sr, padding = "do_not_pad" )["input_features"][0] )
+        spec = np.concatenate( spec, axis = 0 )
+        
         ## convert spec to colorful (3 channel)
         spec_colorful =  np.flip( self.cmap(self.min_max_norm(spec,min_spec_value, max_spec_value))[:,:,:3], axis = 0)
         
@@ -173,10 +180,18 @@ class SpecViewer:
         ax.imshow( canvas_image, interpolation="bilinear" ) 
         
         ax.spines[['top', 'right', 'left']].set_visible(False)
-        ax.text(-137,35,"Spectrogram:", fontfamily = "monospace" )
-        ax.text(-137,-20,"Wav file name: %s"%(audio_file_name), fontfamily = "monospace" )
-        ax.text(-137,115,"Prediction:", fontfamily = "monospace" )
-        ax.text(-137,165,"Label:", fontfamily = "monospace" )
+        x_offset = - 150
+        if audio_file_name != "":
+            ax.text(x_offset,-20,"Wav file name: %s"%(audio_file_name), fontfamily = "monospace" )
+        ax.text(x_offset,10,"Spectrogram:", fontfamily = "monospace" )
+        
+        y_offset = spec.shape[0]  
+        if audio_channel_names is not None and isinstance( audio_channel_names, list ):
+            for channel_idx in range( min( audio.shape[0], len(audio_channel_names) ) ):
+                ax.text(x_offset + 20, (y_offset // audio.shape[0]) * (channel_idx + 0.6) , audio_channel_names[channel_idx], fontfamily = "monospace" )
+        
+        ax.text(x_offset, 30 + y_offset,"Prediction:", fontfamily = "monospace" )
+        ax.text(x_offset, 80 + y_offset,"Label:", fontfamily = "monospace" )
         ax.set_yticks([])
         ax.set_xticks( spec_xticks_values, spec_xticks_labels )
         ax.set_xlabel("time (s)")
@@ -185,12 +200,12 @@ class SpecViewer:
         plt.legend(handles=patches, loc="upper center", bbox_to_anchor=(0.5, -0.5), ncol=4)
         plt.show()
         
-    def visualize( self, audio, sr, prediction = None, label = None, min_frequency = None, max_frequency = None, precision_bits = 3, audio_file_name = "", window_size = 5.0, xticks_step_size = 0.5, spec_width = 1000):
+    def visualize( self, audio, sr, audio_channel_names = None, prediction = None, label = None, min_frequency = None, max_frequency = None, precision_bits = 3, audio_file_name = "", window_size = 5.0, xticks_step_size = 0.5, spec_width = 1000):
       
         feature_extractor = WhisperSegFeatureExtractor( sr, window_size / spec_width, min_frequency, max_frequency )
         
         
-        whole_spec = feature_extractor( audio, sampling_rate=sr, padding = "do_not_pad" )["input_features"][0]
+        # whole_spec = feature_extractor( audio, sampling_rate=sr, padding = "do_not_pad" )["input_features"][0]
         min_spec_value = None  # np.percentile( whole_spec, 0.02)
         max_spec_value = None  # np.percentile( whole_spec, 99.98)
         
@@ -209,9 +224,10 @@ class SpecViewer:
         prediction["cluster"] = list(map(str, prediction["cluster"]))
         
         return interact(self.plot_spec_and_labels, 
-                    offset=(0, max(0, len(audio)/sr - window_size ), window_size / 20 ), 
+                    offset=(0, max(0, audio.shape[1]/sr - window_size ), window_size / 20 ), 
                     window_size = fixed(window_size), 
                     audio = fixed(audio), 
+                    audio_channel_names = fixed(audio_channel_names),
                     prediction = fixed(prediction),
                     label = fixed(label), 
                     sr = fixed(sr), 

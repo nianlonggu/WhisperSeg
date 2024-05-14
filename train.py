@@ -98,6 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("--initial_model_path" )
     parser.add_argument("--model_folder" )
     parser.add_argument("--train_dataset_folder" )
+    parser.add_argument("--mask_rate", type = float, default = 0.5 )
     parser.add_argument("--n_device", type = int, default = 1 )
     parser.add_argument("--gpu_list", type = int, nargs = "+", default = None )
     parser.add_argument("--project", default = "whisperseg-multi-species" )
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     audio_list_train, label_list_train = slice_audios_and_labels( audio_list_train, label_list_train, args.total_spec_columns )
 
     training_dataset = VocalSegDataset( audio_list_train, label_list_train, tokenizer, args.max_length, 
-                                         args.total_spec_columns, model.module.config.species_codebook  )
+                                         args.total_spec_columns, model.module.config.species_codebook, mask_rate = args.mask_rate )
 
     training_dataloader = DataLoader( training_dataset, batch_size = args.batch_size , shuffle = True , 
                                              worker_init_fn = lambda x:[np.random.seed( epoch  + x ),  
