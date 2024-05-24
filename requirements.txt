@@ -1,4 +1,4 @@
-transformers==4.31.0
+transformers==4.38.2
 peft==0.4.0
 accelerate==0.21.0
 bitsandbytes==0.41.1
@@ -17,3 +17,5 @@ flask
 flask-cors
 streamlit
 plotly
+evaluate
+jiwer
