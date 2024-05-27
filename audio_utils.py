@@ -187,10 +187,10 @@ class SpecViewer:
         
     def visualize( self, audio, sr, prediction = None, label = None, min_frequency = None, max_frequency = None, precision_bits = 3, audio_file_name = "", window_size = 5.0, xticks_step_size = 0.5, spec_width = 1000):
       
-        feature_extractor = WhisperSegFeatureExtractor( sr, window_size / spec_width, min_frequency, max_frequency )
+        feature_extractor = WhisperSegFeatureExtractor( sr, window_size / spec_width, min_frequency, max_frequency, chunk_length = max(30, window_size)  )
         
         
-        whole_spec = feature_extractor( audio, sampling_rate=sr, padding = "do_not_pad" )["input_features"][0]
+        # whole_spec = feature_extractor( audio, sampling_rate=sr, padding = "do_not_pad" )["input_features"][0]
         min_spec_value = None  # np.percentile( whole_spec, 0.02)
         max_spec_value = None  # np.percentile( whole_spec, 99.98)
         
