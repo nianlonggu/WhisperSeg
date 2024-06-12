@@ -567,7 +567,7 @@ class WhisperSegmenterForEval(SegmenterBase):
                                                  top_p = top_p,
                                                  length_penalty = length_penalty
                                                )
-            generated_text_batch = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+            generated_text_batch = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=False)
             generated_text_list += generated_text_batch
         return generated_text_list
     
@@ -611,7 +611,7 @@ class WhisperSegmenter(SegmenterBase):
                                                  top_p = top_p,
                                                  length_penalty = length_penalty
                                                )
-            generated_text_batch = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+            generated_text_batch = tokenizer.batch_decode(generated_ids, skip_special_tokens=False)
             generated_text_list += generated_text_batch
             
             ### if status_monitor is not None, update the progress in percentage
