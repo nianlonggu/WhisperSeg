@@ -171,6 +171,7 @@ def main():
             st.session_state["segmentation_csv_name"] = f"{uploaded_file.name[:-4]}_anno.csv"
             st.rerun()
     else:
+        print("New request:", datetime.now())
         audio_data = st.session_state['audio_data']
         channel_id = st.session_state['channel_id']
         sr = st.session_state['sr']
