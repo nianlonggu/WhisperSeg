@@ -14,6 +14,7 @@ from audio_utils import SpecViewer, WhisperSegFeatureExtractor
 from utils import *
 from model import *
 from datautils import *
+from evaluate import evaluate
 import subprocess
 
 from transformers import AdamW, get_linear_schedule_with_warmup
@@ -41,55 +42,7 @@ def train_iteration(batch):
     """
     return loss.item()
 
-def evaluate( audio_list, label_list, segmenter, batch_size, max_length, num_trials, consolidation_method = "clustering", num_beams=4, target_cluster = None ):
 
-    total_n_true_positive_segment_wise, total_n_positive_in_prediction_segment_wise, total_n_positive_in_label_segment_wise = 0,0,0
-    total_n_true_positive_frame_wise, total_n_positive_in_prediction_frame_wise, total_n_positive_in_label_frame_wise = 0,0,0
-    
-    for audio, label in tqdm(zip(audio_list, label_list), total = len(audio_list)):        
-        prediction = segmenter.segment(  audio, sr = label["sr"],
-                       min_frequency = label["min_frequency"],
-                       spec_time_step = label["spec_time_step"],
-                       min_segment_length = label["min_segment_length"],
-                       eps = label["eps"],  ## for DBSCAN clustering
-                       time_per_frame_for_voting = label.get("time_per_frame_for_voting", 0.001), ## for bin-wise voting, by default it is not used
-                       consolidation_method = consolidation_method,
-                       max_length = max_length, 
-                       batch_size = batch_size, 
-                       num_trials = num_trials,
-                       num_beams = num_beams
-                 )
-
-        
-        TP, P_pred, P_label = segmenter.segment_score( prediction, label,  target_cluster = target_cluster, tolerance = label["tolerance"] )[:3]
-        total_n_true_positive_segment_wise += TP
-        total_n_positive_in_prediction_segment_wise += P_pred
-        total_n_positive_in_label_segment_wise += P_label
-        
-        
-        TP, P_pred, P_label = segmenter.frame_score( prediction, label,  target_cluster = target_cluster, 
-                                                     time_per_frame_for_scoring = label["time_per_frame_for_scoring"] )[:3]
-        
-        total_n_true_positive_frame_wise += TP
-        total_n_positive_in_prediction_frame_wise += P_pred
-        total_n_positive_in_label_frame_wise += P_label
-        
-    res = {}
-    
-    precision = total_n_true_positive_segment_wise / max(total_n_positive_in_prediction_segment_wise, 1e-12)
-    recall = total_n_true_positive_segment_wise / max( total_n_positive_in_label_segment_wise, 1e-12 )
-    f1 = 2/(1/max(precision, 1e-12) + 1/max(recall, 1e-12)  )
-    
-    res["segment_wise"] = [ total_n_true_positive_segment_wise, total_n_positive_in_prediction_segment_wise, total_n_positive_in_label_segment_wise, precision, recall, f1 ]
-    
-    
-    precision = total_n_true_positive_frame_wise / max(total_n_positive_in_prediction_frame_wise, 1e-12)
-    recall = total_n_true_positive_frame_wise / max( total_n_positive_in_label_frame_wise, 1e-12 )
-    f1 = 2/(1/max(precision, 1e-12) + 1/max(recall, 1e-12)  )
-    
-    res["frame_wise"] = [ total_n_true_positive_frame_wise, total_n_positive_in_prediction_frame_wise, total_n_positive_in_label_frame_wise, precision, recall, f1 ]
-    
-    return res
 
 if __name__ == "__main__":
     
@@ -123,7 +76,7 @@ if __name__ == "__main__":
     parser.add_argument("--freeze_encoder", type = int, default = 0 )
     parser.add_argument("--dropout", type = float, default = 0.0 )
     parser.add_argument("--num_workers", type = int, default = 4 )
-    parser.add_argument("--clear_cluster_codebook", type = int, help="set the pretrained model's cluster_codebook to empty dict. This is used when we train the segmenter on a complete new dataset. Set this to 0 if you just want to slighlt finetune the model with some additional data with the same cluster naming rule.", default = 0 )
+    parser.add_argument("--clear_cluster_codebook", type = int, help="set the pretrained model's cluster_codebook to empty dict. This is used when we train the segmenter on a complete new dataset. Set this to 0 if you just want to slighlt finetune the model with some additional data with the same cluster naming rule.", default = 1 )
     
     args = parser.parse_args()
 
@@ -177,12 +130,17 @@ if __name__ == "__main__":
 
     scaler = torch.cuda.amp.GradScaler()
 
-    audio_path_list_train, label_path_list_train = get_audio_and_label_paths( args.train_dataset_folder )  
+    audio_path_list_train, label_path_list_train = get_audio_and_label_paths( args.train_dataset_folder ) 
 
+    default_config = determine_default_config(audio_path_list_train, label_path_list_train, args.total_spec_columns)
+    ## store the default segmentation config
+    segmenter.model.config.default_segmentation_config = default_config
+    segmenter.default_segmentation_config = default_config
+    
     cluster_codebook = get_cluster_codebook( label_path_list_train, segmenter.cluster_codebook )
     segmenter.update_cluster_codebook( cluster_codebook )
-
-    audio_list_train, label_list_train = load_data(audio_path_list_train, label_path_list_train, cluster_codebook = cluster_codebook, n_threads = 20 )
+    
+    audio_list_train, label_list_train = load_data(audio_path_list_train, label_path_list_train, cluster_codebook = cluster_codebook, n_threads = 20, default_config = default_config )
 
     if args.val_ratio > 0:
         (audio_list_train, label_list_train), ( audio_list_val, label_list_val ) = train_val_split( audio_list_train, label_list_train, args.val_ratio )
@@ -203,7 +161,6 @@ if __name__ == "__main__":
         print("Error: Too few examples (less than a batch) for training! Exit!")
         sys.exit(1)
     
-
     if args.max_num_iterations is not None and args.max_num_iterations > 0:
         args.max_num_epochs = int(np.ceil( args.max_num_iterations / len( training_dataloader )  ))
     else:
@@ -251,7 +208,7 @@ if __name__ == "__main__":
                 print("Start validation ...")
                 model.eval()
                 ## in the validation set, set the num_trails to 1
-                eval_res = evaluate( audio_list_val, label_list_val, segmenter, args.batch_size, args.max_length, num_trials =1, consolidation_method = None, num_beams=1, target_cluster = None )
+                eval_res = evaluate( audio_list_val, label_list_val, segmenter, args.batch_size, args.max_length, num_trials =1, num_beams=1, target_cluster = None )
          
                 print("Epoch: %d, current_step: %d, validation segment F1 score: %.2f, frame F1 score: %.2f"%( epoch, current_step, 
                                                                       eval_res["segment_wise"][-1], eval_res["frame_wise"][-1] ))

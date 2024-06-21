@@ -115,10 +115,11 @@ class SegmenterBase:
         self.total_spec_columns = None
         self.precision_bits = 3
         self.cluster_codebook = None
+        self.default_segmentation_config = {}
 
     ### segmentation-related functions:
     def get_sliced_audios_features( self,  audio, sr, min_frequency, spec_time_step, num_trials):
-        feature_extractor = WhisperSegFeatureExtractor( sr, spec_time_step, min_frequency = min_frequency )
+        feature_extractor = WhisperSegFeatureExtractor( sr, spec_time_step, min_frequency = min_frequency, chunk_length = max( 30, int( np.ceil( spec_time_step * self.total_spec_columns ) ) )  )
         clip_duration = self.total_spec_columns * spec_time_step
         
         max_num_padding_samples = int( clip_duration * sr )
@@ -389,11 +390,12 @@ class SegmenterBase:
     
     @torch.no_grad()
     def segment( self, audio, sr,
-                       min_frequency = 0,
-                       spec_time_step = 0.0025,
-                       min_segment_length = 0.02,
-                       eps = 0.02,  ## for DBSCAN clustering
-                       time_per_frame_for_voting = 0.001, ## for voting
+                       min_frequency = None,
+                       spec_time_step = None,
+
+                       min_segment_length = None,
+                       eps = None,  ## for DBSCAN clustering
+                       time_per_frame_for_voting = None, ## for voting
                        consolidation_method = "clustering",
                        max_length = 448, 
                        batch_size = 4, 
@@ -404,11 +406,20 @@ class SegmenterBase:
                        length_penalty = 1.0,
                        status_monitor = None 
                ):
-        tic1 = time.time()
+        if min_frequency is None:
+            min_frequency = self.default_segmentation_config.get( "min_frequency", 0)
+        if spec_time_step is None:
+            spec_time_step = self.default_segmentation_config.get( "spec_time_step", 0.0025 )
+            
+        if min_segment_length is None:
+            min_segment_length = spec_time_step * RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP 
+        if eps is None:
+            eps = spec_time_step * RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP * 4 
+        if time_per_frame_for_voting is None:
+            time_per_frame_for_voting = spec_time_step
+        
         sliced_audios_features = self.get_sliced_audios_features( audio, sr, min_frequency, spec_time_step, num_trials)
-        tic2 = time.time()
         generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, length_penalty, status_monitor )
-        tic3 = time.time()
         final_prediction = self.parse_generation( 
             generated_text_list, sliced_audios_features,
                          min_segment_length, 
@@ -418,18 +429,12 @@ class SegmenterBase:
                          eps, time_per_frame_for_voting,
                          consolidation_method 
                         )
-        tic4 = time.time()
-        
-        # print("get sliced audio features time:",tic2 - tic1)
-        # print("generation time:",tic3 - tic2)
-        # print("parsing time:",tic4 - tic3)
         
         return final_prediction
             
 
     ### evaluation-related functions
-    def compute_syllable_score( self, prediction_on_offset_list, label_on_offset_list, tolerance = 0.02  ):
-        
+    def compute_syllable_score( self, prediction_on_offset_list, label_on_offset_list, tolerance  ):        
         n_positive_in_prediction = len(prediction_on_offset_list)
         n_positive_in_label = len(label_on_offset_list)
         
@@ -448,7 +453,9 @@ class SegmenterBase:
         
         return n_true_positive, n_positive_in_prediction, n_positive_in_label
 
-    def segment_score( self, prediction, label, target_cluster = None, tolerance = 0.02 ):
+    def segment_score( self, prediction, label, target_cluster = None, tolerance = None ):
+        if tolerance is None:
+            tolerance = self.default_segmentation_config.get( "spec_time_step", 0.0025 ) * 4
         
         prediction_on_offset_list = []
         for pos in range(len(prediction["onset"])):
@@ -471,7 +478,10 @@ class SegmenterBase:
             
         return TP, P_pred, P_label, precision, recall, f1
     
-    def frame_score(self, prediction, label, target_cluster = None, time_per_frame_for_scoring = 0.01 ):
+    def frame_score(self, prediction, label, target_cluster = None, time_per_frame_for_scoring = None ):
+        if time_per_frame_for_scoring is None:
+            time_per_frame_for_scoring = min( 0.001, self.default_segmentation_config.get( "spec_time_step", 0.0025 ) )
+
         prediction_segments = prediction
         label_segments = label
         
@@ -543,7 +553,10 @@ class WhisperSegmenterForEval(SegmenterBase):
         self.total_spec_columns = self.model.config.total_spec_columns
         self.cluster_codebook = self.model.config.cluster_codebook
         self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
-            
+
+        if hasattr( self.model.config, "default_segmentation_config" ):
+            self.default_segmentation_config.update( self.model.config.default_segmentation_config )
+        
     def update_cluster_codebook(self, cluster_codebook):
         self.model.config.cluster_codebook = cluster_codebook
         
@@ -588,7 +601,10 @@ class WhisperSegmenter(SegmenterBase):
         
         self.total_spec_columns = self.model_list[0].config.total_spec_columns
         self.cluster_codebook = self.model_list[0].config.cluster_codebook
-        self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }         
+        self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
+        
+        if hasattr( self.model_list[0].config, "default_segmentation_config" ):
+            self.default_segmentation_config.update( self.model_list[0].config.default_segmentation_config )
         
         
     def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
@@ -644,6 +660,9 @@ class WhisperSegmenterFast(SegmenterBase):
         self.total_spec_columns = model_config["total_spec_columns"]
         self.cluster_codebook = model_config["cluster_codebook"]
         self.inverse_cluster_codebook = { cluster_id:cluster  for cluster, cluster_id in self.cluster_codebook.items() }
+
+        if "default_segmentation_config" in model_config:
+            self.default_segmentation_config.update( model_config["default_segmentation_config"] )
 
     def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
                                           length_penalty, generated_texts_dict, thread_id, status_monitor = None ):

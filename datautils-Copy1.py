@@ -8,78 +8,26 @@ from copy import deepcopy
 import json
 from audio_utils import WhisperSegFeatureExtractor
 from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
-import soundfile as sf
 
-def get_sampling_rate(file_path):
-    with sf.SoundFile(file_path) as audio_file:
-        sampling_rate = audio_file.samplerate
-    return sampling_rate
-
-def read_label( label_path, default_config = {} ):
-    if label_path.endswith(".json"):
-        label = json.load( open(label_path) )
-    elif label_path.endswith(".csv"):
-        label = pd.read_csv( label_path )
-        label = { k:v.tolist() for k,v in label.items() }
-    else:
-        assert False, "Unsupported file format!"
-    assert "onset" in label and "offset" in label
-    if "cluster" not in label:
-        label["cluster"] = ["0"] * len( label["onset"] )
-    label["cluster"] = list(map(str, label["cluster"]))
-
-    for k in default_config:
-        if k not in label:
-            label[k] = default_config[k]
-    return label
 
 def get_audio_and_label_paths( folder ):
     wav_list = [ folder + "/" + fname for fname in os.listdir( folder ) if fname.endswith(".wav") ]
     audio_paths = []
     label_paths = []
     for wav_name in wav_list:
-        if os.path.exists(wav_name[:-4] + ".json"):
+        label_name = wav_name[:-4] + ".json"
+        if os.path.exists(label_name):
             audio_paths.append( wav_name )
-            label_paths.append( wav_name[:-4] + ".json" )
-        elif os.path.exists(wav_name[:-4] + ".csv"):
-            audio_paths.append( wav_name )
-            label_paths.append( wav_name[:-4] + ".csv" )
+            label_paths.append( label_name )
     
     return audio_paths, label_paths
-
-def determine_default_config(audio_paths, label_paths, total_spec_columns):
-    onsets = []
-    offsets = []
-    for label_path in label_paths:
-        label = read_label(label_path)
-        onsets += label["onset"]
-        offsets += label["offset"]
-    onsets = np.array(onsets)
-    offsets = np.array(offsets)
-    assert len(onsets) > 0, "No vocal segment is annotated in the label files."
-    seg_dur_median = np.median( offsets - onsets )
-    scale_factor = 25
-    spec_time_step = np.ceil(seg_dur_median * scale_factor / 0.5) * 0.5  / total_spec_columns
-    min_frequency = 0
-    species = "unkown"
-    sr_list = []
-    for audio_fname in audio_paths:
-        sr_list.append( get_sampling_rate( audio_fname ) )
-    assert len(sr_list) > 0, "No valid audios were provided."
-    sr = int(np.median(sr_list))
-    return {
-        "species": species,
-        "sr":sr,
-        "min_frequency":min_frequency,
-        "spec_time_step":spec_time_step,
-    }
 
 def get_cluster_codebook( label_paths, initial_cluster_codebook ):
     cluster_codebook = deepcopy( initial_cluster_codebook )
     
     unique_clusters = []
     for label_file in label_paths:
-        label = read_label(label_file)
+        label = json.load( open(label_file) )
         unique_clusters += [ str(cluster) for cluster in label["cluster"]   ]
             
     unique_clusters = sorted(list(set(unique_clusters)))
@@ -89,12 +37,12 @@ def get_cluster_codebook( label_paths, initial_cluster_codebook ):
             cluster_codebook[cluster] = len(cluster_codebook)
     return cluster_codebook
 
-def load_audio_and_label( audio_path_list, label_path_list, thread_id, audio_dict, label_dict, cluster_codebook, default_config = {} ):
+def load_audio_and_label( audio_path_list, label_path_list, thread_id, audio_dict, label_dict, cluster_codebook ):
     local_audio_list = []
     local_label_list = []
     
     for count, (audio_path, label_path) in enumerate(zip( audio_path_list, label_path_list )):
-        label = read_label(label_path, default_config) 
+        label = json.load(open( label_path ))
         y, _ = librosa.load( audio_path, sr = label["sr"] )
                 
         local_audio_list.append( y )
@@ -128,7 +76,7 @@ def load_audio_and_label( audio_path_list, label_path_list, thread_id, audio_dic
     audio_dict[thread_id] = local_audio_list
     label_dict[thread_id] = local_label_list
     
-def load_data(audio_path_list, label_path_list, cluster_codebook = None, n_threads = 1, default_config = {} ):
+def load_data(audio_path_list, label_path_list, cluster_codebook = None, n_threads = 1 ):
     samples_per_thread = int(np.ceil( len(audio_path_list) / n_threads ))
     audio_dict = {}
     label_dict = {}
@@ -139,8 +87,7 @@ def load_data(audio_path_list, label_path_list, cluster_codebook = None, n_threa
                                                           label_path_list[offset:offset+samples_per_thread],
                                                           thread_id,
                                                           audio_dict, label_dict,
-                                                          cluster_codebook,
-                                                          default_config
+                                                          cluster_codebook
                                                         ) )
         t.start()
         thread_list.append(t)
@@ -277,19 +224,18 @@ class VocalSegDataset(Dataset):
     def __init__(self, audio_list, label_list, tokenizer, max_length, total_spec_columns, species_codebook ):
         self.audio_list = audio_list
         self.label_list = label_list
-        self.feature_extractor_bank = self.get_feature_extractor_bank( label_list, total_spec_columns )
+        self.feature_extractor_bank = self.get_feature_extractor_bank( label_list )
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.total_spec_columns = total_spec_columns
         self.species_codebook = species_codebook
         
-    def get_feature_extractor_bank(self, label_list, total_spec_columns ):
-        max_clip_duration = max( [30,] + [ int(np.ceil( label["spec_time_step"] * total_spec_columns )) for label in label_list ] )
+    def get_feature_extractor_bank(self, label_list ):
         feature_extractor_bank = {}
         for label in label_list:
             key = "%s-%s-%s"%( str( label["sr"] ), str(label["spec_time_step"]), str(label["min_frequency"]) )
             if key not in feature_extractor_bank:
-                feature_extractor_bank[key] = WhisperSegFeatureExtractor( label["sr"], label["spec_time_step"], label["min_frequency"], chunk_length = max_clip_duration )
+                feature_extractor_bank[key] = WhisperSegFeatureExtractor( label["sr"], label["spec_time_step"], label["min_frequency"] )
         return feature_extractor_bank
         
     def map_time_to_spec_col_index(self, t, spec_time_step ):
@@ -341,13 +287,6 @@ class VocalSegDataset(Dataset):
         
         audio_clip = np.concatenate( [ audio_clip, np.zeros( num_samples_in_clip - len(audio_clip) ) ], axis = 0 ).astype(np.float32)
         input_features = feature_extractor(audio_clip, sampling_rate = sr, padding = "do_not_pad")["input_features"][0]
-        input_features = input_features[:,:self.total_spec_columns]
-        
-        if input_features.shape[1] > 0:
-            min_spec_value = input_features.min()
-        else:
-            min_spec_value = 0
-        input_features = np.concatenate( [ input_features, min_spec_value * np.ones( ( input_features.shape[0], self.total_spec_columns - input_features.shape[1] ) ) ], axis = 1 ).astype(np.float32)
         
         decoder_input_ids = self.tokenizer.encode( label_text,  max_length = self.max_length + 1, truncation=True, padding = True )
         labels = decoder_input_ids[1:]

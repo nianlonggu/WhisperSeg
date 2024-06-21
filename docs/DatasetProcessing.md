@@ -1,73 +1,102 @@
 # Dataset Processing
 
-**Note**: Runing the following commands in the main folder of the repository (where the README.md and .py files are located)
-
-## Download the dataset used in the paper
-
-
-```python
-from huggingface_hub import snapshot_download
-```
-
-### Multi-Species VAD dataset
-This dataset contains the union of the VAD datasets for five different species (zebra finch, bengalese finch, marmoset, mouse and human) used in the paper.
-
-
-```python
-snapshot_download('nccratliri/vad-multi-species', local_dir = "data/multi-species", repo_type="dataset" )
-```
-
-### Zebra finch
-For the zebra finch only dataset, the training set contains the training examples for both adults and juveniles. For testing, we divide the test set into adults and juveniles sets and report the test performance separately.
-
-
-```python
-snapshot_download('nccratliri/vad-zebra-finch', local_dir = "data/zebra-finch", repo_type="dataset" )
-```
-
-### Bengalese finch
-
-
-```python
-snapshot_download('nccratliri/vad-bengalese-finch', local_dir = "data/bengalese-finch", repo_type="dataset" )
-```
-
-### Marmoset
-
-
-```python
-snapshot_download('nccratliri/vad-marmoset', local_dir = "data/marmoset", repo_type="dataset" )
-```
-
-### Mouse
-
-
-```python
-snapshot_download('nccratliri/vad-mouse', local_dir = "data/mouse", repo_type="dataset" )
-```
-
-### Human-AVA-Speech
-
-
-```python
-snapshot_download('nccratliri/vad-human-ava-speech', local_dir = "data/human-ava-speech", repo_type="dataset" )
-```
-
 ## Build custom dataset
 
 One dataset contains two subsets: training subset and testing subset, each stored in a separate folder, e.g., "train/" and "test/".
 
-In the train/ folder, each audio recording is paired with an annotation file. Here are the requirements for the audio recording and the corresponding annotation file:
-* audio recording:
+In the train/ folder, each audio recording is paired with an annotation file. Here are the requirements for the **audio recording** and the corresponding **annotation file**:
+### Audio recording:
   * It is a ".wav" file, e.g., the file name can be arbitrary but must end with ".wav, such as "rec_0001.wav".
   * It has only one channel (mono sound).
   * Its sampling rate and length (duration) can be arbitrary.
-* annotation file:
-  * It's a .json file, and its name should be the same as the corresponding audio file except for the format. So given an audio file named "rec_0001.wav", the corresponding annotation file should be "rec_0001.json"
+### Annotation file:
+There are two options for the format of the annotation file:
+#### Option 1:
+  * The annotation file is a .csv file, and its name should be the same as the corresponding audio file except for the format. So given an audio file named "rec_0001.wav", the corresponding annotation file should be "rec_0001.csv"
+  * This csv file contains three columns "**onset**", "**offset**" and "**cluster**". The unit of onset and offset is second (s). The csv file looks like below:
+
+    <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>onset</th>
+      <th>offset</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20.953844</td>
+      <td>21.033750</td>
+      <td>call0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>21.648063</td>
+      <td>21.741531</td>
+      <td>call0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>21.850719</td>
+      <td>21.938219</td>
+      <td>call0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>21.952313</td>
+      <td>21.999469</td>
+      <td>call1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>22.013906</td>
+      <td>22.060031</td>
+      <td>call0</td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+* The file structures of the dataset looks like below:
+```
+data/marmoset/
+├── test
+│   ├── marmoset_pair1_animal1_animal1out_0.csv
+│   ├── marmoset_pair1_animal1_animal1out_0.wav
+│   ├── marmoset_pair2_animal1_animal1out_0.csv
+│   ├── marmoset_pair2_animal1_animal1out_0.wav
+└── train
+    ├── marmoset_pair4_animal1_together_A_0.csv
+    ├── marmoset_pair4_animal1_together_A_0.wav
+    ├── marmoset_pair4_animal1_together_B_0.csv
+    ├── marmoset_pair4_animal1_together_B_0.wav
+    ├── marmoset_pair5_animal1_animal1out_0.csv
+    └── marmoset_pair5_animal1_animal1out_0.wav
+```
+#### Option 2:
+  * The annotation file is a .json file, and its name should be the same as the corresponding audio file except for the format. So given an audio file named "rec_0001.wav", the corresponding annotation file should be "rec_0001.json"
   * The json file contains the following keys:
     * "**onset**": a list of the starting time (in second) of the segments in the audio, ordered chronologically.
     * "**offset**": a list of the ending time (in second) of segments in the audio
-    * "**cluster**": a list of the segment types (plain text) of the segments in the audio. If in the dataset, there are multiple species, the segment type of different species should be unique. A recommended way is to prefix the species name before the segment type. For example "mouse_call_type_0", "marmoset_call_type_0", etc.
+    * "**cluster**": a list of the segment types (plain text) of the segments in the audio. <br></br>
+
+    The following keys are **optional**. You can add these keys and values if you want to have a more in-depth control of the segmentation parameters. If these parameters are not given, the model will use the default values based on the median of the segment length.
     * "**species**": The species in the audio, e.g., "zebra_finch". In this paper, we experinmented on five species: "zebra_finch", "bengalese_finch", "mouse", "marmoset", "human". Adding new species is possible. **When adding new species, go to the** [load_model() function in model.py](../model.py#L90), **add a new pair of species_name:species_token to the species_codebook variable. E.g., "meerkat":"<|meerkat|>"**.
     * "**sr**": The sampling rate that is used to load the audio. The audio file will be resampled to the sampling rate specified by **sr**, regardless of the native sampling rate of the audio file.
     * "**min_frequency**": the minimum frequency when computing the Log Melspectrogram. Frequency components below min_frequency will not be included in the input spectrogram.
@@ -77,11 +106,9 @@ In the train/ folder, each audio recording is paired with an annotation file. He
     * "**time_per_frame_for_scoring**": The time bin size (in second) used when computing the $F1_\text{frame}$ score. We set **time_per_frame_for_scoring** to 0.001 for all datasets.
     * "**eps**": The threshold $\epsilon_\text{vote}$ during the multi-trial majority voting when processing long audio files
 
-*Recommended values of **sr, min_frequency, spec_time_step, min_segment_length, time_per_frame_for_scoring, and eps** are available at [config/segment_config.json](../config/segment_config.json)
+    Recommended values of **sr, min_frequency, spec_time_step, min_segment_length, time_per_frame_for_scoring, and eps** are available at [config/segment_config.json](../config/segment_config.json)
 
-The test/ folder contains the test set and has the same structure as the training set.
-
-Here is the file structures (taking the marmoset dataset (downloaded above) as an example):
+* The test/ folder contains the test set and has the same structure as the training set. Here is the example file structures:
 ```
 data/marmoset/
 ├── test
@@ -89,25 +116,7 @@ data/marmoset/
 │   ├── marmoset_pair1_animal1_animal1out_0.wav
 │   ├── marmoset_pair2_animal1_animal1out_0.json
 │   ├── marmoset_pair2_animal1_animal1out_0.wav
-│   ├── marmoset_pair3_animal1_animal1out_0.json
-│   ├── marmoset_pair3_animal1_animal1out_0.wav
-│   ├── marmoset_pair3_animal1_together_0.json
-│   ├── marmoset_pair3_animal1_together_0.wav
-│   ├── marmoset_pair4_animal1_together_A_0.json
-│   ├── marmoset_pair4_animal1_together_A_0.wav
-│   ├── marmoset_pair4_animal1_together_B_0.json
-│   ├── marmoset_pair4_animal1_together_B_0.wav
-│   ├── marmoset_pair5_animal1_animal1out_0.json
-│   └── marmoset_pair5_animal1_animal1out_0.wav
 └── train
-    ├── marmoset_pair1_animal1_animal1out_0.json
-    ├── marmoset_pair1_animal1_animal1out_0.wav
-    ├── marmoset_pair2_animal1_animal1out_0.json
-    ├── marmoset_pair2_animal1_animal1out_0.wav
-    ├── marmoset_pair3_animal1_animal1out_0.json
-    ├── marmoset_pair3_animal1_animal1out_0.wav
-    ├── marmoset_pair3_animal1_together_0.json
-    ├── marmoset_pair3_animal1_together_0.wav
     ├── marmoset_pair4_animal1_together_A_0.json
     ├── marmoset_pair4_animal1_together_A_0.wav
     ├── marmoset_pair4_animal1_together_B_0.json
@@ -115,8 +124,7 @@ data/marmoset/
     ├── marmoset_pair5_animal1_animal1out_0.json
     └── marmoset_pair5_animal1_animal1out_0.wav
 ```
-
-Here is how it looks like in an annotation file (take "marmoset_pair4_animal1_together_B_0.json" as an example):
+* Here is how it looks like in an annotation file (take "marmoset_pair4_animal1_together_B_0.json" as an example):
 ```
 {'onset': [0.1979075547210413,
   10.623481169473052,
@@ -195,6 +203,57 @@ Here is how it looks like in an annotation file (take "marmoset_pair4_animal1_to
 ```
 
 
-The choice of the parameters are described in [README/Illustration-of-segmentation-parameters](../README.md#Illustration-of-segmentation-parameters) and [README/Segmentation-examples](../README.md#Segmentation-Examples). Please refer to the downloaded dataset for detailed examples. For further illustration, please refer to our paper.
+The choice of the **optional** parameters are described in [README/Illustration-of-segmentation-parameters](../README.md#Illustration-of-segmentation-parameters) and [README/Segmentation-examples](../README.md#Segmentation-Examples). For further illustration, please refer to our paper.
 
-**Note**: All audio files in the training and test set need to be fully annotated.
+**Note**: All audio files in the training and test set need to be fully annotated (regarding the target vocal segments).
+
+## Download the dataset used in the paper
+**Note**: Runing the following commands in the main folder of the repository (where the README.md and .py files are located)
+
+```python
+from huggingface_hub import snapshot_download
+```
+
+### Multi-Species VAD dataset
+This dataset contains the union of the VAD datasets for five different species (zebra finch, bengalese finch, marmoset, mouse and human) used in the paper.
+
+
+```python
+snapshot_download('nccratliri/vad-multi-species', local_dir = "data/multi-species", repo_type="dataset" )
+```
+
+### Zebra finch
+For the zebra finch only dataset, the training set contains the training examples for both adults and juveniles. For testing, we divide the test set into adults and juveniles sets and report the test performance separately.
+
+
+```python
+snapshot_download('nccratliri/vad-zebra-finch', local_dir = "data/zebra-finch", repo_type="dataset" )
+```
+
+### Bengalese finch
+
+
+```python
+snapshot_download('nccratliri/vad-bengalese-finch', local_dir = "data/bengalese-finch", repo_type="dataset" )
+```
+
+### Marmoset
+
+
+```python
+snapshot_download('nccratliri/vad-marmoset', local_dir = "data/marmoset", repo_type="dataset" )
+```
+
+### Mouse
+
+
+```python
+snapshot_download('nccratliri/vad-mouse', local_dir = "data/mouse", repo_type="dataset" )
+```
+
+### Human-AVA-Speech
+
+
+```python
+snapshot_download('nccratliri/vad-human-ava-speech', local_dir = "data/human-ava-speech", repo_type="dataset" )
+```

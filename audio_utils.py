@@ -19,8 +19,8 @@ class WhisperSegFeatureExtractor( WhisperFeatureExtractor ):
     def __init__(self, sr, spec_time_step, min_frequency = None, max_frequency = None, chunk_length = 30 ):
         
         hop_length = int( spec_time_step * sr )
-        if hop_length != spec_time_step * sr:
-            print("Warning: spec_time_step * sr must be an integer. Consider changing the sampling rate sr.")
+        # if hop_length != spec_time_step * sr:
+        #     print("Warning: spec_time_step * sr must be an integer. Consider changing the sampling rate sr.")
         
         if sr <= 32000:
             n_fft = 512
@@ -187,7 +187,7 @@ class SpecViewer:
         
     def visualize( self, audio, sr, prediction = None, label = None, min_frequency = None, max_frequency = None, precision_bits = 3, audio_file_name = "", window_size = 5.0, xticks_step_size = 0.5, spec_width = 1000):
       
-        feature_extractor = WhisperSegFeatureExtractor( sr, window_size / spec_width, min_frequency, max_frequency, chunk_length = max(30, window_size)  )
+        feature_extractor = WhisperSegFeatureExtractor( sr, window_size / spec_width, min_frequency, max_frequency, chunk_length = max(30, int(np.ceil(window_size)) )  )
         
         
         # whole_spec = feature_extractor( audio, sampling_rate=sr, padding = "do_not_pad" )["input_features"][0]
