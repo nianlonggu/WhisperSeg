@@ -269,7 +269,7 @@ if __name__ == "__main__":
         subprocess.run([ "python", "convert_hf_to_ct2.py", 
                          "--model", hf_model_folder,
                          "--output_dir", ct2_model_folder,
-                         "--quantization", "float16"
+                         "--quantization", "int8_float16"
                        ])    
     
     print("All Done!")    

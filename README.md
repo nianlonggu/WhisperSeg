@@ -45,13 +45,17 @@ conda activate wseg
 
 ## Documentation
 ### Model Training and Evaluation
-Please refer to the following documents for the complete pipeline of training WhisperSeg, including 1) dataset processing, 2) model training and 3) model evaluation.
+
+**The pretrained WhisperSeg may not work well on your own dataset.** A finetuning would be necessary in this case.
+We prepared a Jupyter notebook that provides a comprehensive walkthrough of WhisperSeg finetuning. This includes steps for data processing, training, and evaluation. You can access this notebook at [docs/WhisperSeg_Training_Pipeline.ipynb](docs/WhisperSeg_Training_Pipeline.ipynb), or run it in Google Colab: <a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Training_Pipeline.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
+Please refer to the following documents for the complete guideline of training WhisperSeg, including 1) dataset processing, 2) model training and 3) model evaluation.
 
 1. [**Dataset Processing**](docs/DatasetProcessing.md)
 2. [**Model Training**](docs/ModelTraining.md)
 3. [**Evaluation**](docs/Evaluation.md)
 
-We have also prepared a Jupyter notebook that provides a comprehensive walkthrough of WhisperSeg finetuning. This includes steps for data processing, training, and evaluation. You can access this notebook at [docs/WhisperSeg_Training_Pipeline.ipynb](docs/WhisperSeg_Training_Pipeline.ipynb), or run it in Google Colab: <a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Training_Pipeline.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
 
 ### How To Use The Trained Model
 #### Use WhisperSeg in your Python code
@@ -92,13 +96,14 @@ segmenter = WhisperSegmenterFast( "nccratliri/whisperseg-large-ms-ct2", device="
 
 ### Illustration of segmentation parameters
 
-The following paratemers need to be configured for different species.
+The following paratemers need to be configured for different species when calling the segment function.
 * **sr**: sampling rate $f_s$ of the audio when loading
-* **min_frequency**: the minimum frequency when computing the Log Melspectrogram. Frequency components below min_frequency will not be included in the input spectrogram
 * **spec_time_step**: Spectrogram Time Resolution. By default, one single input spectrogram of WhisperSeg contains 1000 columns. 'spec_time_step' represents the time difference between two adjacent columns in the spectrogram. It is equal to FFT_hop_size / sampling_rate: $\frac{L_\text{hop}}{f_s}$ .
-* **min_segment_length**: The minimum allowed length of predicted segments. The predicted segments whose length is below 'min_segment_length' will be discarded.
-* **eps**: The threshold $\epsilon_\text{vote}$ during the multi-trial majority voting when processing long audio files
-* **num_trials**: The number of segmentation variant produced during the multi-trial majority voting process. Setting num_trials to 1 for noisy data with long segment durations, such as the human AVA-speech dataset, and set num_trials to 3 when segmenting animal vocalizations.
+* **min_frequency**: (*Optional*) The minimum frequency when computing the Log Melspectrogram. Frequency components below min_frequency will not be included in the input spectrogram. ***Default: 0***
+* **min_segment_length**: (*Optional*) The minimum allowed length of predicted segments. The predicted segments whose length is below 'min_segment_length' will be discarded. ***Default: spec_time_step * 2***
+* **eps**: (*Optional*) The threshold $\epsilon_\text{vote}$ during the multi-trial majority voting when processing long audio files. ***Default: spec_time_step * 8***
+* **num_trials**: (*Optional*) The number of segmentation variant produced during the multi-trial majority voting process. Setting num_trials to 1 for noisy data with long segment durations, such as the human AVA-speech dataset, and set num_trials to 3 when segmenting animal vocalizations. ***Default: 3***
+
 
 The recommended settings of these parameters are available at [config/segment_config.json](config/segment_config.json). More details are described in Table 1 in the paper:
 ![Specific Segmentation Parameters](assets/species_specific_parameters.png). 
@@ -118,24 +123,13 @@ spec_viewer = SpecViewer()
 
 
 ```python
-sr = 32000  
-min_frequency = 0
-spec_time_step = 0.0025
-min_segment_length = 0.01
-eps = 0.02
-num_trials = 3
-```
+sr = 32000
+spec_time_step = 0.0025  
 
-
-```python
-audio, _ = librosa.load( "data/example_subset/Zebra_finch/test_adults/zebra_finch_g17y2U-f00007.wav", 
+audio, _ = librosa.load( "data/example_subset/Zebra_finch/test_adults/zebra_finch_g17y2U-f00007.wav",
                          sr = sr )
-```
-
-
-```python
-prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials )
+## Note if spec_time_step is not provided, a default value will be used by the model.
+prediction = segmenter.segment(  audio, sr = sr, spec_time_step = spec_time_step )
 print(prediction)
 ```
 
@@ -143,8 +137,8 @@ print(prediction)
 
 
 ```python
-spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, prediction = prediction,
-                       window_size=8, precision_bits=1 
+spec_viewer.visualize( audio = audio, sr = sr, prediction = prediction,
+                       window_size=8, precision_bits=1
                      )
 ```
 
@@ -155,8 +149,8 @@ Let's load the human annoated segments and compare them with WhisperSeg's predic
 
 ```python
 label = json.load( open("data/example_subset/Zebra_finch/test_adults/zebra_finch_g17y2U-f00007.json") )
-spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, prediction = prediction, label=label,
-                       window_size=8, precision_bits=1 
+spec_viewer.visualize( audio = audio, sr = sr, prediction = prediction, label=label,
+                       window_size=8, precision_bits=1
                      )
 ```
 
@@ -166,21 +160,16 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 
 
 ```python
-sr = 32000  
-min_frequency = 0
+sr = 32000
 spec_time_step = 0.0025
-min_segment_length = 0.01
-eps = 0.02
-num_trials = 3
 
 audio_file = "data/example_subset/Zebra_finch/test_juveniles/zebra_finch_R3428_40932.29996086_1_24_8_19_56.wav"
 label_file = audio_file[:-4] + ".json"
 audio, _ = librosa.load( audio_file, sr = sr )
 label = json.load( open(label_file) )
 
-prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials )
-spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, prediction = prediction, label=label, 
+prediction = segmenter.segment(  audio, sr = sr, spec_time_step = spec_time_step )
+spec_viewer.visualize( audio = audio, sr = sr, prediction = prediction, label=label,
                        window_size=15, precision_bits=1 )
 ```
 
@@ -190,21 +179,16 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 
 
 ```python
-sr = 32000  
-min_frequency = 0
+sr = 32000
 spec_time_step = 0.0025
-min_segment_length = 0.01
-eps = 0.02
-num_trials = 3
 
 audio_file = "data/example_subset/Bengalese_finch/test/bengalese_finch_bl26lb16_190412_0721.20144_0.wav"
 label_file = audio_file[:-4] + ".json"
 audio, _ = librosa.load( audio_file, sr = sr )
 label = json.load( open(label_file) )
 
-prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials )
-spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, prediction = prediction, label=label, 
+prediction = segmenter.segment(  audio, sr = sr, spec_time_step = spec_time_step )
+spec_viewer.visualize( audio = audio, sr = sr, prediction = prediction, label=label,
                        window_size=3 )
 ```
 
@@ -214,21 +198,16 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 
 
 ```python
-sr = 48000  
-min_frequency = 0
+sr = 48000
 spec_time_step = 0.0025
-min_segment_length = 0.01
-eps = 0.02
-num_trials = 3
 
 audio_file = "data/example_subset/Marmoset/test/marmoset_pair4_animal1_together_A_0.wav"
 label_file = audio_file[:-4] + ".json"
 audio, _ = librosa.load( audio_file, sr = sr )
 label = json.load( open(label_file) )
 
-prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials )
-spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, prediction = prediction, label=label )
+prediction = segmenter.segment(  audio, sr = sr, spec_time_step = spec_time_step )
+spec_viewer.visualize( audio = audio, sr = sr, prediction = prediction, label=label )
 ```
 
 ![vis](assets/res_marmoset.gif)
@@ -237,20 +216,18 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 
 
 ```python
-sr = 300000  
-min_frequency = 35000
+sr = 300000
 spec_time_step = 0.0005
-min_segment_length = 0.01
-eps = 0.02
-num_trials = 3
+"""Since mouse produce high frequency vocalizations, we need to set min_frequency to a large value (instead of 0), 
+   to make the Mel-spectrogram's frequency range match the mouse vocalization's frequency range"""
+min_frequency = 35000  
 
 audio_file = "data/example_subset/Mouse/test/mouse_Rfem_Afem01_0.wav"
 label_file = audio_file[:-4] + ".json"
 audio, _ = librosa.load( audio_file, sr = sr )
 label = json.load( open(label_file) )
 
-prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials )
+prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step )
 spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, prediction = prediction, label=label )
 ```
 
@@ -260,11 +237,9 @@ spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, pre
 
 
 ```python
-sr = 16000  
-min_frequency = 0
+sr = 16000
 spec_time_step = 0.01
-min_segment_length = 0.1
-eps = 0.2
+"""For human speech the multi-trial voting is not so effective, so we set num_trials=1 instead of the default value (3)"""
 num_trials = 1
 
 audio_file = "data/example_subset/Human_AVA_Speech/test/human_xO4ABy2iOQA_clip.wav"
@@ -272,9 +247,8 @@ label_file = audio_file[:-4] + ".json"
 audio, _ = librosa.load( audio_file, sr = sr )
 label = json.load( open(label_file) )
 
-prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps,num_trials = num_trials )
-spec_viewer.visualize( audio = audio, sr = sr, min_frequency= min_frequency, prediction = prediction, label=label, 
+prediction = segmenter.segment(  audio, sr = sr, spec_time_step = spec_time_step, num_trials = num_trials )
+spec_viewer.visualize( audio = audio, sr = sr, prediction = prediction, label=label,
                        window_size=20, precision_bits=0, xticks_step_size = 2 )
 ```
 
