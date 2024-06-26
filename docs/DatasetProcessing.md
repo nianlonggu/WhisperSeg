@@ -16,19 +16,6 @@ There are two options for the format of the annotation file:
   * This csv file contains three columns "**onset**", "**offset**" and "**cluster**". The unit of onset and offset is second (s). The csv file looks like below:
 
     <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">

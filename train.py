@@ -1,4 +1,5 @@
 import os,sys,inspect
+script_dirname = os.path.dirname(os.path.abspath(__file__))
 from tqdm import tqdm
 import shutil
 import numpy as np
@@ -266,7 +267,7 @@ if __name__ == "__main__":
         hf_model_folder = args.model_folder+"/final_checkpoint"
         ct2_model_folder = hf_model_folder + "_ct2"
         
-        subprocess.run([ "python", "convert_hf_to_ct2.py", 
+        subprocess.run([ "python", os.path.join( script_dirname, "convert_hf_to_ct2.py" ), 
                          "--model", hf_model_folder,
                          "--output_dir", ct2_model_folder,
                          "--quantization", "int8_float16"

@@ -58,6 +58,98 @@ Please refer to the following documents for the complete guideline of training W
 
 
 ### How To Use The Trained Model
+#### Use WhisperSeg in command line
+Activate the "wseg" ananconda environment:
+```bash
+conda activate wseg
+```
+Then run
+```bash
+python scripts/segment.py --model_path nccratliri/whisperseg-animal-vad-ct2 --audio_path data/example_subset/Marmoset/test/marmoset_pair4_animal1_together_A_0.wav --csv_save_path ./out.csv
+```
+The out.csv contains the segmentation results:
+
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>onset</th>
+      <th>offset</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>15.585</td>
+      <td>15.682</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>15.777</td>
+      <td>15.837</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>15.883</td>
+      <td>15.922</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>16.007</td>
+      <td>16.047</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>16.132</td>
+      <td>16.157</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>192</th>
+      <td>61.167</td>
+      <td>61.293</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>193</th>
+      <td>61.410</td>
+      <td>61.448</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>194</th>
+      <td>61.502</td>
+      <td>61.538</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>195</th>
+      <td>61.727</td>
+      <td>61.867</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>196</th>
+      <td>61.953</td>
+      <td>61.995</td>
+      <td>vocal</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
 #### Use WhisperSeg in your Python code
 Please refer to the section [**Voice Activity Detection Demo**](README.md#voice-activity-detection-demo) below.
 
