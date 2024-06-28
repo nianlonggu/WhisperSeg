@@ -63,6 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_per_epoch", type = int, default = 0 )
     parser.add_argument("--max_num_epochs", type = int, default = 3 )
     parser.add_argument("--max_num_iterations", type = int, default = None )
+    parser.add_argument("--min_num_iterations", type = int, default = 500 )
     parser.add_argument("--val_ratio", type = float, default = 0.0 )
     
     parser.add_argument("--max_length", type = int, default = 100 )
@@ -162,11 +163,15 @@ if __name__ == "__main__":
         print("Error: Too few examples (less than a batch) for training! Exit!")
         sys.exit(1)
     
-    if args.max_num_iterations is not None and args.max_num_iterations > 0:
+    if args.max_num_iterations is not None and args.max_num_iterations > 0:            
         args.max_num_epochs = int(np.ceil( args.max_num_iterations / len( training_dataloader )  ))
     else:
         assert args.max_num_epochs is not None and args.max_num_epochs > 0
         args.max_num_iterations = len( training_dataloader ) * args.max_num_epochs
+        
+        if args.min_num_iterations is not None:
+            args.max_num_iterations = max( args.max_num_iterations, args.min_num_iterations )
+            args.max_num_epochs = int(np.ceil( args.max_num_iterations / len( training_dataloader )  ))
                 
     if args.lr_schedule == "linear":
         scheduler = get_linear_schedule_with_warmup(
