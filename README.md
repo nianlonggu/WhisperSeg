@@ -55,6 +55,14 @@ Please refer to the following documents for the complete guideline of training W
 2. [**Model Training**](docs/ModelTraining.md)
 3. [**Evaluation**](docs/Evaluation.md)
 
+**Update 01.07.2024** We provided a web interface where users can finetune WhisperSeg and running segmentation by simply dragging and dropping files and clicking start. 
+
+1. In the 'wseg' python environment, start the web service:
+```bash
+streamlit run scripts/service.py --server.maxUploadSize 2000 -- --backend_dataset_base_folder data/datasets/ --backend_model_base_folder model/
+```
+2. In the browser, open http://localhost:8501 and use the web interface for finetuning and segmentation
+![gui](assets/finetune_gui.png)
 
 
 ### How To Use The Trained Model

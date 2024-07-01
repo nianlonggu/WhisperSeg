@@ -27,7 +27,7 @@ def convert_df_to_datagrid_format(df):
     return {'columns': columns, 'rows': rows}
 
 def start_backend_service( flask_port, dataset_base_folder, model_base_folder ):
-    subprocess.run( [ "python", os.path.join( script_dirname, "backend_service.py" ),
+    subprocess.run( [ "python", os.path.join( script_dirname, "backend.py" ),
                       "--flask_port", str( flask_port ),
                       "--dataset_base_folder", str(dataset_base_folder), 
                       "--model_base_folder", str(model_base_folder)
