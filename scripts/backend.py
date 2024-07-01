@@ -101,13 +101,13 @@ def release_gpu():
 def list_models_available_for_finetuning():
     global model_information
     all_models = model_information["all_models"]
-    models = [ { "model_name": item["model_name"], "status": item["status"] } for item in all_models if item["finetune_model_path"] is not None and item["status"] == "ready" ]
+    models = [ { "model_name": item["model_name"], "status": item["status"], "eta":item.get("eta","--:--:--") } for item in all_models if item["finetune_model_path"] is not None and item["status"] == "ready" ]
     return jsonify({'response': models }), 200
 
 @app.route('/list-models-available-for-inference', methods=['POST'])
 def list_models_available_for_inference():
     all_models = model_information["all_models"]
-    models = [ { "model_name": item["model_name"], "status": item["status"] } for item in all_models if item["inference_model_path"] is not None and item["status"] == "ready" ]
+    models = [ { "model_name": item["model_name"], "status": item["status"], "eta":item.get("eta","--:--:--") } for item in all_models if item["inference_model_path"] is not None and item["status"] == "ready" ]
     return jsonify({'response': models }), 200
 
 @app.route('/list-models-training-in-progress', methods=['POST'])
