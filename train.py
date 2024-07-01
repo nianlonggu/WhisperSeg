@@ -17,6 +17,7 @@ from model import *
 from datautils import *
 from evaluate import evaluate
 import subprocess
+import json
 
 from transformers import AdamW, get_linear_schedule_with_warmup
 
@@ -78,6 +79,7 @@ if __name__ == "__main__":
     parser.add_argument("--freeze_encoder", type = int, default = 0 )
     parser.add_argument("--dropout", type = float, default = 0.0 )
     parser.add_argument("--num_workers", type = int, default = 4 )
+    
     parser.add_argument("--clear_cluster_codebook", type = int, help="set the pretrained model's cluster_codebook to empty dict. This is used when we train the segmenter on a complete new dataset. Set this to 0 if you just want to slighlt finetune the model with some additional data with the same cluster naming rule.", default = 1 )
     
     args = parser.parse_args()
@@ -187,6 +189,10 @@ if __name__ == "__main__":
     eary_stop = False
     current_step = 0
 
+    progress = 0
+    eta = None
+    start_time = time.time()
+    
     for epoch in range(args.max_num_epochs + 1):  # This +1 is to ensure current_step can reach args.max_num_iterations
         for count, batch in enumerate( tqdm( training_dataloader ) ):
             training_loss_value_list.append( train_iteration(batch) )
@@ -196,6 +202,19 @@ if __name__ == "__main__":
                 
             current_step += 1
 
+            current_time = time.time()
+            current_progress = int(np.round(current_step / args.max_num_iterations * 100))
+            eta = int((current_time - start_time) / ( current_step / args.max_num_iterations ) * ( 1 - current_step / args.max_num_iterations ))
+            eta_hours = eta // 3600
+            eta_minutes = (eta % 3600) // 60
+            eta_seconds = ( eta % 3600 ) % 60
+            if current_progress > progress:
+                json.dump( { "progress":current_progress,
+                             "eta": "%02d:%02d:%02d"%( eta_hours, eta_minutes, eta_seconds )
+                           }, open( args.model_folder + "/status.json", "w" ) )
+            progress = current_progress
+
+            
             if current_step % args.print_every == 0:
                 print("Epoch: %d, current_step: %d, learning rate: %f, Loss: %.4f"%( epoch, current_step, get_lr(optimizer)[0], np.mean(training_loss_value_list)) )
                 wandb.log(
@@ -252,11 +271,15 @@ if __name__ == "__main__":
         if current_step >= args.max_num_iterations or eary_stop :
             break   
 
+    json.dump( { "progress":100,
+                 "eta": "%02d:%02d:%02d"%( 0, 0, 0 )
+               }, open( args.model_folder + "/status.json", "w" ) )
+
     best_checkpoint_batch_number = None
     if len(val_score_history) > 0:
         best_checkpoint_batch_number = sorted( val_score_history, key = lambda x:-x[1] )[0][0]
     else:
-        ckpt_list = glob( args.model_folder + "/*" )
+        ckpt_list = glob( args.model_folder + "/checkpoint-*" )
         if len( ckpt_list ) >0:
             ckpt_list.sort( key = os.path.getmtime )
             ckpt_name = ckpt_list[-1]
@@ -276,7 +299,11 @@ if __name__ == "__main__":
                          "--model", hf_model_folder,
                          "--output_dir", ct2_model_folder,
                          "--quantization", "int8_float16"
-                       ])    
+                       ])
+    try:
+        os.remove( args.model_folder + "/status.json" )
+    except:
+        pass
     
     print("All Done!")    
 

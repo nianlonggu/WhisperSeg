@@ -20,3 +20,4 @@ plotly
 evaluate
 jiwer
 streamlit-elements
+streamlit-autorefresh

@@ -30,7 +30,6 @@ import torch
 import re
 from pathlib import Path
 
-
 # Make Flask application
 app = Flask(__name__)
 CORS(app)
@@ -75,7 +74,24 @@ def list_models():
                              "finetune_model_path": None,
                              "status": item["status"]
                            } )
+
+    for item in all_models:
+        if item["status"] == "training":
+            training_status_fname = os.path.join( model_base_folder, name, "status.json" )
+            try:
+                status_data = json.load( open( training_status_fname ) )
+                eta = status_data["eta"]
+                assert len(re.findall( "^\d+:\d+:\d+$", eta )) == 1
+            except:
+                eta = "--:--:--"
+            item["eta"] = eta
+                       
     return all_models
+
+def periodic_list_models( model_information ):
+    while True:
+        model_information["all_models"] = list_models()
+        time.sleep(1)
 
 def release_gpu():
     gc.collect()
@@ -83,26 +99,27 @@ def release_gpu():
 
 @app.route('/list-models-available-for-finetuning', methods=['POST'])
 def list_models_available_for_finetuning():
-    all_models = list_models()
+    global model_information
+    all_models = model_information["all_models"]
     models = [ { "model_name": item["model_name"], "status": item["status"] } for item in all_models if item["finetune_model_path"] is not None and item["status"] == "ready" ]
     return jsonify({'response': models }), 200
 
 @app.route('/list-models-available-for-inference', methods=['POST'])
 def list_models_available_for_inference():
-    all_models = list_models()
+    all_models = model_information["all_models"]
     models = [ { "model_name": item["model_name"], "status": item["status"] } for item in all_models if item["inference_model_path"] is not None and item["status"] == "ready" ]
     return jsonify({'response': models }), 200
 
 @app.route('/list-models-training-in-progress', methods=['POST'])
 def list_models_training_in_progress():
-    all_models = list_models()
-    models = [ { "model_name": item["model_name"], "status": item["status"] } for item in all_models if item["status"] != "ready" ]
+    all_models = model_information["all_models"]
+    models = [ { "model_name": item["model_name"], "status": item["status"], "eta":item.get("eta","--:--:--") } for item in all_models if item["status"] != "ready" ]
     return jsonify({'response': models }), 200
 
 @app.route('/list-all-models', methods=['POST'])
 def list_all_models():
-    all_models = list_models()
-    models = [ { "model_name": item["model_name"], "status": item["status"] } for item in all_models ]
+    all_models = model_information["all_models"]
+    models = [ { "model_name": item["model_name"], "status": item["status"], "eta":item.get("eta","--:--:--") } for item in all_models ]
     return jsonify({'response': models }), 200
 
 @app.route('/get-training-request-queue', methods=['POST'])
@@ -121,7 +138,7 @@ def submit_training_request():
         inital_model_name = request.form.get('inital_model_name', type=str, default=None)
         num_epochs = request.form.get('num_epochs', type=int, default=3)
 
-        illegal_strings = list(set(re.findall("[^a-zA-Z0-9\-\_]+", model_name )))
+        illegal_strings = list(set(re.findall("[^a-zA-Z0-9\-\_\.]+", model_name )))
         if len(illegal_strings) > 0:
             error_msg = {'error': 'Model name cannot contain special characters "%s"'%(" ".join( illegal_strings ))}
             assert False
@@ -282,10 +299,10 @@ if __name__ == '__main__':
     training_request_queue = list()
     sem = threading.Semaphore()
     running_segmenters = {}
+    model_information = { "all_models":[] }
 
-    t = threading.Thread( target = run_training_script, args = ( training_request_queue, ) )
-    t.daemon = True
-    t.start()
+    threading.Thread( target = run_training_script, args = ( training_request_queue, ), daemon = True ).start()
+    threading.Thread( target = periodic_list_models, args = ( model_information, ), daemon = True ).start()
     
     print("Waiting for requests...")
 
