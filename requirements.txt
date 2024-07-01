@@ -21,3 +21,4 @@ evaluate
 jiwer
 streamlit-elements
 streamlit-autorefresh
+gputil
