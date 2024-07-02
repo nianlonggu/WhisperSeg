@@ -11,7 +11,7 @@ jupyterlab
 sentencepiece==0.1.99
 librosa
 ipywidgets
-matplotlib
+matplotlib==3.7.3
 moviepy
 flask
 flask-cors

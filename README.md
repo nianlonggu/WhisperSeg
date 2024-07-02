@@ -13,11 +13,12 @@ We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Au
 conda env create -f environment.yml
 ```
 ### Method 2: Install via pip
+**Update 02.07.2024: Specify the cudnn version 8.xx**
 ```bash
 conda create -n wseg python=3.10 -y
 conda activate wseg
 pip install -r requirements.txt
-conda install -c pypi cudnn -y
+conda install conda-forge::cudnn==8.9.7.29 -y
 ```
 
 **NOTE:** For method 1 and 2, if running WhisperSeg on windows, one need to further uninstall 'bitsandbytes' by 
