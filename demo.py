@@ -221,17 +221,19 @@ def main():
         b64 = base64.b64encode(csv.encode()).decode()
         href = f'<a href="data:file/csv;base64,{b64}" download="{csv_name}">Download CSV file</a>'
         st.markdown(href, unsafe_allow_html=True)
+
+        st.dataframe(df)
         
-        columns = list( df.keys() )
-        fig = go.Figure(
-                 data=[go.Table(header=dict(values=columns),
-                                cells=dict(values=[df[col_name] for col_name in columns  ]))
-                     ] )
-        fig.update_layout(
-            height=800,
-            margin=dict(l=0, r=0, b=0, t=0 )
-        )
-        st.plotly_chart(fig)
+        # columns = list( df.keys() )
+        # fig = go.Figure(
+        #          data=[go.Table(header=dict(values=columns),
+        #                         cells=dict(values=[df[col_name] for col_name in columns  ]))
+        #              ] )
+        # fig.update_layout(
+        #     height=800,
+        #     margin=dict(l=0, r=0, b=0, t=0 )
+        # )
+        # st.plotly_chart(fig)
         
 
 if __name__ == "__main__":
