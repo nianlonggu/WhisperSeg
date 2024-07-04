@@ -8,7 +8,7 @@ conda activate wseg
 
 and run the following command:
 ```bash
-streamlit run demo.py --server.maxUploadSize 2000 --server.port 8080 --  --model_path nccratliri/whisperseg-large-ms-ct2 --device cuda --device_ids 0
+streamlit run demo.py --server.maxUploadSize 2000 --server.address 0.0.0.0 --server.port 8080 --  --model_path nccratliri/whisperseg-large-ms-ct2 --device cuda --device_ids 0
 ```
 **Illustration of parameters:**
 1. **server.maxUploadSize**: The maximum size (in MB) of the uploaded audio file.

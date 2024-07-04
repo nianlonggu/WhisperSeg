@@ -61,7 +61,6 @@ parser.add_argument('--segment_config_path', default = "config/segment_config.js
 parser.add_argument('--model_path')
 parser.add_argument('--device', default = "cuda")
 parser.add_argument("--device_ids", help="a list of GPU ids", type = int, nargs = "+", default = [0,])
-parser.add_argument("--species", help="main target species", default = None)
 try:
     args = parser.parse_args()
 except SystemExit as e:
@@ -71,18 +70,17 @@ except SystemExit as e:
     os._exit(e.code)
 
     
-def segment(segmenter, audio_data, channel_id, sr, min_frequency, spec_time_step, min_segment_length, eps, num_trials, adobe_audition_compatible, segment_results = {} ):
+def segment(segmenter, audio_data, channel_id, min_frequency, adobe_audition_compatible, segment_results = {} ):
         
     ### load the audio
-    audio, _ = librosa.load( io.BytesIO(audio_data), sr = sr, mono=False )
+    audio, sr = librosa.load( io.BytesIO(audio_data), sr = None, mono=False )
     if len(audio.shape) == 2:
         audio = audio[channel_id]
     audio_duration = len(audio) / sr
     segment_results["audio_duration"] = audio_duration
             
     ### segment the audio
-    prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, spec_time_step = spec_time_step,
-                       min_segment_length = min_segment_length, eps = eps, num_trials = num_trials, status_monitor = segment_results )
+    prediction = segmenter.segment(  audio, sr = sr, min_frequency = min_frequency, status_monitor = segment_results )
     
     ### post-process the segmentation results
     if adobe_audition_compatible:
@@ -104,24 +102,7 @@ def segment(segmenter, audio_data, channel_id, sr, min_frequency, spec_time_step
     segment_results['segmentation_df'] = pd.DataFrame( prediction )
     segment_results['is_done'] = True
     
-    
-# Callback function to update species
-def update_hyperparameters():
-    cfg = st.session_state["segment_config"].get( st.session_state["species"], {} )
-    st.session_state['sr'] = cfg.get( "sr", 32000 )
-    st.session_state['min_frequency'] = cfg.get( "min_frequency", 0 )
-    st.session_state['spec_time_step'] = cfg.get( "spec_time_step", 0.0025 )
-    st.session_state['min_segment_length'] = cfg.get( "min_segment_length", 0.01 )
-    st.session_state['eps'] = cfg.get( "eps", 0.02 )
-    st.session_state['num_trials'] = cfg.get( "num_trials", 3 )
-    
 def init_session_state():
-    if "segment_config" not in st.session_state:
-        st.session_state["segment_config"] = json.load(open(args.segment_config_path))
-        st.session_state["species_list"] = sorted(list(st.session_state["segment_config"].keys())) + ["Other"]
-        if args.species is not None and args.species in st.session_state["species_list"]:
-           st.session_state["species_list"].remove(args.species)
-           st.session_state["species_list"] = [args.species]  + st.session_state["species_list"]
     if "segmentation_csv_name" not in st.session_state:
         st.session_state["segmentation_csv_name"] = None
     if "segmentation_df" not in st.session_state:
@@ -134,7 +115,6 @@ def refresh_button_calback():
     st.session_state["segmentation_df"] = None
     st.session_state["segmentation_csv_name"] = None
 
-    
 def main():
     
     init_session_state()
@@ -144,7 +124,6 @@ def main():
     
     # Sidebar for hyperparameters
     st.sidebar.title("Setting")
-    st.sidebar.selectbox('Select Species', options=st.session_state["species_list"], key = "species", on_change = update_hyperparameters )
             
     st.markdown("""
 <style>
@@ -155,14 +134,7 @@ def main():
     
     st.sidebar.number_input('Channel ID', value=0, key = "channel_id")
     st.sidebar.checkbox('Adobe Audition Compatible', value=True, key = "adobe_audition_compatible")     
-
-    cfg = st.session_state["segment_config"].get( st.session_state["species_list"][0], {} )
-    st.sidebar.number_input('Sample Rate (Hz)', value = cfg.get( "sr", None ), key = "sr", step = 1  )
-    st.sidebar.number_input('Minimum Frequency (Hz)', value= cfg.get( "min_frequency", None ), key = "min_frequency", step = 1)
-    st.sidebar.number_input('Spectrogram Time Step (s)', value= cfg.get( "spec_time_step", None ), key = "spec_time_step", step = 0.0001, format="%.4f")
-    st.sidebar.number_input('Minimum Segment Length (s)', value= cfg.get( "min_segment_length", None ), key = "min_segment_length", step = 0.001, format="%.3f")
-    st.sidebar.number_input('Epsilon (s)', value= cfg.get( "eps", None ), key = "eps", step = 0.001, format="%.3f")
-    st.sidebar.number_input('Number of Trials', value= cfg.get( "num_trials", None ), key = "num_trials", step = 1)
+    st.sidebar.number_input('Minimum Frequency (Hz)', value= 0, key = "min_frequency", step = 1)
                 
     if st.session_state["audio_data"] is None:
         uploaded_file = st.file_uploader('Upload audio file', type=['wav', 'mp3'])
@@ -174,16 +146,11 @@ def main():
         print("New request:", datetime.now())
         audio_data = st.session_state['audio_data']
         channel_id = st.session_state['channel_id']
-        sr = st.session_state['sr']
         min_frequency = st.session_state['min_frequency']
-        spec_time_step = st.session_state['spec_time_step']
-        min_segment_length = st.session_state['min_segment_length']
-        eps = st.session_state['eps'] 
-        num_trials = st.session_state['num_trials']
         adobe_audition_compatible = st.session_state['adobe_audition_compatible']
         
         segment_results = { "progress":0, "is_done":False }
-        t = threading.Thread( target = segment, args = ( segmenter, audio_data, channel_id, sr, min_frequency, spec_time_step, min_segment_length, eps, num_trials, adobe_audition_compatible, segment_results)  )
+        t = threading.Thread( target = segment, args = ( segmenter, audio_data, channel_id, min_frequency, adobe_audition_compatible, segment_results )  )
         t.start()
         
         progress_bar = st.empty()
@@ -209,7 +176,7 @@ def main():
         
     if st.session_state["segmentation_df"] is not None:
         progress_bar.empty()
-        eta_info.empty()
+        eta_info.empty() 
         
         refresh_button = st.button("Refresh", key="refreshButton", on_click=refresh_button_calback)
         
@@ -221,19 +188,17 @@ def main():
         b64 = base64.b64encode(csv.encode()).decode()
         href = f'<a href="data:file/csv;base64,{b64}" download="{csv_name}">Download CSV file</a>'
         st.markdown(href, unsafe_allow_html=True)
-
-        st.dataframe(df)
         
-        # columns = list( df.keys() )
-        # fig = go.Figure(
-        #          data=[go.Table(header=dict(values=columns),
-        #                         cells=dict(values=[df[col_name] for col_name in columns  ]))
-        #              ] )
-        # fig.update_layout(
-        #     height=800,
-        #     margin=dict(l=0, r=0, b=0, t=0 )
-        # )
-        # st.plotly_chart(fig)
+        columns = list( df.keys() )
+        fig = go.Figure(
+                 data=[go.Table(header=dict(values=columns),
+                                cells=dict(values=[df[col_name] for col_name in columns  ]))
+                     ] )
+        fig.update_layout(
+            height=800,
+            margin=dict(l=0, r=0, b=0, t=0 )
+        )
+        st.plotly_chart(fig)
         
 
 if __name__ == "__main__":

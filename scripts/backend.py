@@ -11,7 +11,6 @@ import requests
 from datetime import datetime
 from flask import Flask, jsonify, abort, make_response, request, Response
 from flask_cors import CORS
-
 from model import WhisperSegmenter, WhisperSegmenterFast
 import librosa
 import pandas as pd
@@ -19,7 +18,6 @@ import numpy as np
 from tqdm import tqdm
 import os
 import time
-
 import threading
 import base64
 import io
@@ -29,6 +27,8 @@ import gc
 import torch
 import re
 from pathlib import Path
+import GPUtil
+import zipfile
 
 # Make Flask application
 app = Flask(__name__)
@@ -41,6 +41,26 @@ def bytes_to_base64_string(f_bytes):
 
 def base64_string_to_bytes(base64_string):
     return base64.b64decode(base64_string)
+
+def get_gpu_memory():
+    try:
+        # Get the list of available GPUs
+        gpus = GPUtil.getGPUs()
+
+        # Check if GPU 0 is available
+        if len(gpus) > 0:
+            # Get the free memory of GPU 0
+            gpu_0 = gpus[0]
+            memory_free = gpu_0.memoryFree
+            memory_total = gpu_0.memoryTotal
+
+            return memory_free, memory_total
+        else:
+            print("No GPUs found.")
+            return None, None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None, None
 
 def list_models():
     global model_base_folder, training_request_queue, pretrained_models
@@ -126,7 +146,7 @@ def list_all_models():
 def get_training_request_queue():
     global training_request_queue
     return jsonify({'response': training_request_queue }), 200
-    
+
 @app.route('/submit-training-request', methods=['POST'])
 def submit_training_request():
     global dataset_base_folder, training_request_queue, sem
@@ -163,17 +183,19 @@ def submit_training_request():
         
         # upload the training dataset
         dataset_folder =  os.path.join( dataset_base_folder, model_name )
-        if 'files' not in request.files:
+        if 'zip' not in request.files:
             error_msg = {'error': 'No training files are provided in the request'}
             assert False
 
-        os.makedirs( dataset_folder, exist_ok= True )
-        files = request.files.getlist('files')
-        saved_files = []
-        for file in files:
-            file_path = os.path.join(dataset_folder, file.filename)
-            file.save(file_path)
-            saved_files.append( file_path )
+        file = request.files['zip']
+        if file:
+            os.makedirs( dataset_folder, exist_ok= True )
+            # Load the file into a BytesIO buffer
+            memory_file = io.BytesIO(file.read())
+        
+            # Extract files from the zip archive
+            with zipfile.ZipFile(memory_file, 'r') as zip_ref:
+                zip_ref.extractall(dataset_folder)
 
         # update the training_request_queue 
         with threading.Lock():
@@ -248,28 +270,37 @@ def run_training_script( training_request_queue ):
             print("Start training ...")
             with threading.Lock():
                 training_request_queue[0]["status"] = "training"
-            inital_model_name = training_request_queue[0]["inital_model_name"]
-            inital_model_path = None
-            for item in list_models():
-                if item["model_name"] == inital_model_name and item["finetune_model_path"] is not None and item["status"] == "ready":
-                    inital_model_path = item["finetune_model_path"]
-                    break
-            if inital_model_path is None:
-                print("error: initial model path does not exists.")
+            try:
+                inital_model_name = training_request_queue[0]["inital_model_name"]
+                inital_model_path = None
+                for item in list_models():
+                    if item["model_name"] == inital_model_name and item["finetune_model_path"] is not None and item["status"] == "ready":
+                        inital_model_path = item["finetune_model_path"]
+                        break
+                assert inital_model_path is not None
+
+                model_folder = os.path.join( model_base_folder, training_request_queue[0]["model_name"] )
+
+                ## pause when GPU is currently busy for other tasks
+                gpu_free_memory, gpu_total_memory = get_gpu_memory() 
+                if gpu_free_memory is None or gpu_total_memory is None or gpu_free_memory / gpu_total_memory < 0.7:
+                    print("Warning: GPU may be unavailable or insufficient for training. Pending ...")
+                    time.sleep(60)
+                    continue
+                
+                process_args = [ "python", os.path.join( script_parent_dirname, "train.py" ), 
+                            "--initial_model_path", inital_model_path,
+                            "--train_dataset_folder", training_request_queue[0]["train_dataset_folder"] + "/",
+                            "--model_folder", model_folder,
+                            "--max_num_epochs", str( training_request_queue[0]["num_epochs"] ),
+                        ]
+                subprocess.run( process_args )                
+                
+                print("Training finished.")
                 training_request_queue.pop(0)
-                continue
-            model_folder = os.path.join( model_base_folder, training_request_queue[0]["model_name"] )
-            process_args = [ "python", os.path.join( script_parent_dirname, "train.py" ), 
-                        "--initial_model_path", inital_model_path,
-                        "--train_dataset_folder", training_request_queue[0]["train_dataset_folder"] + "/",
-                        "--model_folder", model_folder,
-                        "--max_num_epochs", str( training_request_queue[0]["num_epochs"] ),
-                    ]
-            subprocess.run( process_args )                
-            
-            print("Training finished.")
-            training_request_queue.pop(0)
-            
+            except:
+                print("Training error!")
+                training_request_queue.pop(0)
         time.sleep(5)
 
 

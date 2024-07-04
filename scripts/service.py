@@ -12,8 +12,26 @@ import requests, json
 import subprocess
 import argparse
 import numpy as np
-import zipfile
 
+import zipfile
+import io
+def create_zip_in_memory_given_folder(folder):
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', compression=zipfile.ZIP_STORED) as zipf:
+        for root, _, files in os.walk(folder):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, arcname=file)
+    memory_file.seek(0)  # Reset file pointer to the beginning
+    return memory_file
+
+def create_zip_in_memory_given_uploaded_files(uploaded_files):
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', compression=zipfile.ZIP_STORED) as zipf:
+        for uploaded_file in uploaded_files:
+            zipf.writestr(uploaded_file.name, uploaded_file.read())
+    memory_file.seek(0)  # Reset file pointer to the beginning
+    return memory_file
 
 def convert_df_to_datagrid_format(df):
     # Convert DataFrame columns to the format expected by DataGrid
@@ -126,7 +144,8 @@ def segment_audio( url, model_name, audio_path, min_frequency = None, spec_time_
     return response.json()
 
 def submit_training_request( url, model_name, inital_model_name, uploaded_files, num_epochs = 3 ):
-    files = [ ('files', (uploaded_file.name, uploaded_file)) for uploaded_file in uploaded_files ]
+    memory_file = create_zip_in_memory_given_uploaded_files(uploaded_files)
+    files = {'zip': memory_file }
     response = requests.post(url, files=files, data = { "model_name":model_name,
                                                         "inital_model_name":inital_model_name,
                                                         "num_epochs":num_epochs
@@ -297,7 +316,7 @@ def main():
     with tabs[2]:
         display_model_list_tab(args.backend_flask_port)
 
-    time.sleep(2)
+    time.sleep(5)
     st.rerun()
 
 if __name__ == "__main__":    
