@@ -22,13 +22,14 @@ def train( server_address, folder, model_name, inital_model_name, num_epochs = 3
     )
     return response.json()
 
-def segment( server_address, audio_path, model_name, min_frequency = None, spec_time_step = None ):
+def segment( server_address, audio_path, model_name, min_frequency = None, spec_time_step = None, channel_id = 0 ):
     response = requests.post( 
          server_address + "/segment",
          files= {'audio_file': open(audio_path, "rb") }, 
          data = { "model_name":model_name,
               "min_frequency":min_frequency,
-              "spec_time_step":spec_time_step
+              "spec_time_step":spec_time_step,
+              "channel_id":channel_id
             }
     )
     return response.json()

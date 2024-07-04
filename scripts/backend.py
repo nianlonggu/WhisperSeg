@@ -224,6 +224,7 @@ def segment():
         model_name = model_name.lower().strip()
         min_frequency = request.form.get('min_frequency', type=int, default=None)
         spec_time_step = request.form.get('spec_time_step', type=float, default=None)
+        channel_id = request.form.get('channel_id', type=int, default=0)
 
         if 'audio_file' not in request.files:
             error_msg = {'error': 'No audio_file is provided'}
@@ -251,7 +252,15 @@ def segment():
 
         segmenter = running_segmenters[model_name]["segmenter"]
         running_segmenters[model_name]["usage"] += 1
-        audio, sr = librosa.load( io.BytesIO(audio_file.read().lstrip()), sr = None )
+        
+        ## handling the multi-channel audio file
+        audio, sr = librosa.load( io.BytesIO(audio_file.read().lstrip()), sr = None, mono=False )
+        if len(audio.shape) == 2:
+            audio = audio[ channel_id ]
+        if len(audio.shape) != 1:
+            error_msg = {'error': 'audio loading failed' }
+            assert False
+        
         prediction = segmenter.segment( audio, sr, min_frequency = min_frequency, spec_time_step = spec_time_step, num_trials = 3, batch_size = 8 )  
 
     except:

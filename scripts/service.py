@@ -12,9 +12,34 @@ import requests, json
 import subprocess
 import argparse
 import numpy as np
-
+import base64
 import zipfile
 import io
+import plotly.figure_factory as ff
+import plotly.graph_objects as go
+
+def decimal_to_seconds( decimal_time ):
+    splits = decimal_time.split(":")
+    if len(splits) == 2:
+        hours = 0
+        minutes, seconds = splits
+    elif len(splits) == 3:
+        hours, minutes, seconds = splits 
+    else:
+        assert False
+    
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+
+def seconds_to_decimal( seconds ):
+    hours = int(seconds // 3600)
+    minutes = int(seconds // 60)
+    seconds = seconds % 60
+    
+    if hours > 0:
+        return "%d:%02d:%06.3f"%( hours, minutes, seconds )
+    else:
+        return "%d:%06.3f"%( minutes, seconds )
+
 def create_zip_in_memory_given_folder(folder):
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, 'w', compression=zipfile.ZIP_STORED) as zipf:
@@ -135,11 +160,12 @@ def list_models_being_trained(flask_port):
 def list_all_models(flask_port):
     return requests.post(f"http://localhost:{flask_port}/list-all-models" ).json()["response"]
 
-def segment_audio( url, model_name, audio_path, min_frequency = None, spec_time_step = None ):
+def segment_audio( url, model_name, audio_path, min_frequency = None, spec_time_step = None, channel_id = 0 ):
     response = requests.post( url, files = { "audio_file": open(audio_path, "rb").read() if isinstance(audio_path, str) else audio_path },
                                    data = { "model_name":model_name,
                                             "min_frequency":min_frequency,
-                                            "spec_time_step":spec_time_step
+                                            "spec_time_step":spec_time_step,
+                                            "channel_id":channel_id
                                           })
     return response.json()
 
@@ -171,7 +197,9 @@ def handle_segmentation( flask_port, model_name, uploaded_files ):
                 status_reporter.write( st.session_state["segmentation_status"] )
                 prediction = segment_audio( f"http://localhost:{flask_port}/segment", 
                                             model_name,
-                                            uploaded_file                             
+                                            uploaded_file,
+                                            min_frequency = st.session_state["min_frequency"],
+                                            channel_id = st.session_state["channel_id"]
                 )
                 overall_prediction["filename"] += [ audio_fname ] * len( prediction["onset"] )
                 overall_prediction["onset"] += prediction["onset"]
@@ -181,7 +209,58 @@ def handle_segmentation( flask_port, model_name, uploaded_files ):
             
     status_reporter.write( st.session_state["segmentation_status"] ) 
     if st.session_state["segmentation_df"] is not None:
-        st.dataframe( st.session_state["segmentation_df"] )  
+        df = st.session_state["segmentation_df"].copy()
+        unique_fnames = list(set(df["filename"].tolist()))
+        if len(unique_fnames) <= 1:
+            del df["filename"]
+        
+        ### post-process the segmentation results
+        if st.session_state["adobe_audition_compatible"]:
+            
+            Start_list = [ seconds_to_decimal( seconds ) for seconds in df["onset"].tolist() ] 
+            Duration_list = [ seconds_to_decimal( end - start ) for start, end in zip( df["onset"].tolist(), df["offset"].tolist() )  ]
+            Format_list = [ "decimal" ] * len(Start_list)
+            Type_list = [ "Cue" ] * len(Start_list)
+            Description_list = [ "" for _ in range(len(Start_list))]
+            Name_list = list(df["cluster"])  
+
+            if "filename" not in df:
+                df = pd.DataFrame({
+                    "\ufeffName":Name_list,
+                    "Start":Start_list,
+                    "Duration":Duration_list,
+                    "Time Format":Format_list,
+                    "Type":Type_list,
+                    "Description":Description_list
+                })
+            else:
+                df = pd.DataFrame({
+                    "filename": df["filename"].tolist(),
+                    "\ufeffName":Name_list,
+                    "Start":Start_list,
+                    "Duration":Duration_list,
+                    "Time Format":Format_list,
+                    "Type":Type_list,
+                    "Description":Description_list
+                })
+            
+        # Download button for CSV file
+        csv = df.to_csv(index = False, sep="\t")
+        b64 = base64.b64encode(csv.encode()).decode()
+        href = f'<a href="data:file/csv;base64,{b64}" download="predicted-annotations.csv">Download CSV file</a>'
+        st.markdown(href, unsafe_allow_html=True)
+
+        columns = list( df.keys() )
+        fig = go.Figure(
+                 data=[go.Table(header=dict(values=columns),
+                                cells=dict(values=[df[col_name] for col_name in columns  ]))
+                     ] )
+        fig.update_layout(
+            height=800,
+            margin=dict(l=0, r=0, b=0, t=0 )
+        )
+        st.plotly_chart(fig)
+
     
 # Function to handle fine-tuning
 def handle_fine_tuning(flask_port, model_name, inital_model_name, uploaded_files):
@@ -208,6 +287,14 @@ def display_segmentation_tab(flask_port):
     model_list = [ item["model_name"] for item in list_models_available_for_inference( flask_port )]
     model_name = st.selectbox("Choose WhisperSeg Model", model_list)
 
+    cols = st.columns(3)
+    with cols[0]:
+        st.number_input('Audio Channel ID', value=0, key = "channel_id")
+    with cols[1]:
+        st.number_input('Minimum Frequency (Hz)', value= 0, key = "min_frequency", step = 1)
+    with cols[2]:
+        st.checkbox('Output CSV Adobe Audition Compatible', value=True, key = "adobe_audition_compatible")     
+    
     cols = st.columns(7)
     with cols[0]:
         if st.button("Start", key="segment"):
