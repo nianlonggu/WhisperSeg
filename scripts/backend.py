@@ -117,6 +117,10 @@ def release_gpu():
     gc.collect()
     torch.cuda.empty_cache()
 
+@app.route('/status', methods=['GET'])
+def status():
+    return jsonify({'status': "ready" }), 200
+
 @app.route('/list-models-available-for-finetuning', methods=['POST'])
 def list_models_available_for_finetuning():
     global model_information

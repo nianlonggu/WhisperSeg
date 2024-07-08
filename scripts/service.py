@@ -84,6 +84,15 @@ def init( flask_port, dataset_base_folder, model_base_folder ):
                           daemon = True
                         )
     t.start()
+    ## wait until the backend service is ready 
+    while True:
+        try:
+            status = requests.get(f"http://localhost:{flask_port}/status" ).json()
+            print("backend is running ...")
+            break
+        except:
+            time.sleep(1)
+
 
 # Function to read the GIF file and encode it in base64
 def get_gif_base64(path):
