@@ -11,13 +11,15 @@ import librosa
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
+from glob import glob
 import time
 import io
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path")
-    parser.add_argument("--audio_path")
+    parser.add_argument("--audio_path", default = None, help="The file path to the audio .wav file")
+    parser.add_argument("--audio_folder", default = None, help="The FOLDER path that contains multiple .wav files. When audio_path is provided, only that audio file is segmented. If audio_path is None, audio_folder must be not None.")
     parser.add_argument("--csv_save_path" )
     parser.add_argument("--device", help="cpu or cuda", default = "cuda")
     parser.add_argument("--device_ids", help="a list of GPU ids", type = int, nargs = "+", default = [0,])
@@ -34,14 +36,33 @@ if __name__ == "__main__":
     except:
         segmenter = WhisperSegmenter( args.model_path, device = args.device, device_ids = args.device_ids )
 
-    if args.audio_path == '-':
-        audio_buffer = io.BytesIO(sys.stdin.buffer.read())
-        audio, sr = librosa.load(audio_buffer, sr=None)
+    if args.audio_path is None:
+        assert args.audio_folder is not None, "Either audio_path or audio_folder needs to be specified!"
+        audio_path_list = glob( args.audio_folder +"/*.wav" ) + glob( args.audio_folder +"/*.WAV" )
+        overall_df = {
+            "filename":[],
+            "onset":[],
+            "offset":[],
+            "cluster":[]
+        }
+        for audio_path in tqdm(audio_path_list):
+            audio_fname = os.path.basename( audio_path )
+            audio, sr = librosa.load(audio_path, sr=None)
+            res = segmenter.segment( audio, sr, min_frequency = args.min_frequency, spec_time_step = args.spec_time_step, num_trials = args.num_trials, batch_size = args.batch_size )
+            overall_df["filename"] += [ audio_fname ] * len(res["onset"])
+            overall_df["onset"] += res["onset"]
+            overall_df["offset"] += res["offset"]
+            overall_df["cluster"] += res["cluster"]
+        df = pd.DataFrame( overall_df )
     else:
-        audio, sr = librosa.load(args.audio_path, sr=None)
-    
-    res = segmenter.segment( audio, sr, min_frequency = args.min_frequency, spec_time_step = args.spec_time_step, num_trials = args.num_trials, batch_size = args.batch_size )
-    df = pd.DataFrame( res )
+        if args.audio_path == '-':
+            audio_buffer = io.BytesIO(sys.stdin.buffer.read())
+            audio, sr = librosa.load(audio_buffer, sr=None)
+        else:
+            audio, sr = librosa.load(args.audio_path, sr=None)
+        
+        res = segmenter.segment( audio, sr, min_frequency = args.min_frequency, spec_time_step = args.spec_time_step, num_trials = args.num_trials, batch_size = args.batch_size )
+        df = pd.DataFrame( res )
 
     if args.csv_save_path == "buffer":
         csv_buffer = io.StringIO()

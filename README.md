@@ -72,7 +72,7 @@ Activate the "wseg" ananconda environment:
 ```bash
 conda activate wseg
 ```
-Then run
+##### Segment given the file path to the .wav audio file
 ```bash
 python scripts/segment.py --model_path nccratliri/whisperseg-animal-vad-ct2 --audio_path data/example_subset/Marmoset/test/marmoset_pair4_animal1_together_A_0.wav --csv_save_path ./out.csv
 ```
@@ -157,6 +157,105 @@ The out.csv contains the segmentation results:
     </tr>
   </tbody>
 </table>
+</div>
+
+##### Segment given the path to the folder that contains multiple .wav files
+```bash
+python scripts/segment.py --model_path nccratliri/whisperseg-animal-vad-ct2 --audio_folder data/example_subset/Zebra_finch/test_juveniles/ --csv_save_path out.csv
+```
+
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>filename</th>
+      <th>onset</th>
+      <th>offset</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>zebra_finch_R3428_40932.67397799_1_24_18_43_17...</td>
+      <td>0.008</td>
+      <td>0.043</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>zebra_finch_R3428_40932.67397799_1_24_18_43_17...</td>
+      <td>0.458</td>
+      <td>0.578</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>zebra_finch_R3428_40932.67397799_1_24_18_43_17...</td>
+      <td>1.122</td>
+      <td>1.318</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>zebra_finch_R3428_40932.67397799_1_24_18_43_17...</td>
+      <td>2.093</td>
+      <td>2.117</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>zebra_finch_R3428_40932.67397799_1_24_18_43_17...</td>
+      <td>2.162</td>
+      <td>2.207</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>269</th>
+      <td>zebra_finch_R3428_40932.31154143_1_24_8_39_14.wav</td>
+      <td>2.253</td>
+      <td>2.372</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>270</th>
+      <td>zebra_finch_R3428_40932.31154143_1_24_8_39_14.wav</td>
+      <td>2.615</td>
+      <td>2.727</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>271</th>
+      <td>zebra_finch_R3428_40932.31154143_1_24_8_39_14.wav</td>
+      <td>2.888</td>
+      <td>2.972</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>272</th>
+      <td>zebra_finch_R3549_40999.66669408_3_31_18_31_9.wav</td>
+      <td>0.010</td>
+      <td>0.110</td>
+      <td>vocal</td>
+    </tr>
+    <tr>
+      <th>273</th>
+      <td>zebra_finch_R3549_40999.66669408_3_31_18_31_9.wav</td>
+      <td>1.742</td>
+      <td>1.843</td>
+      <td>vocal</td>
+    </tr>
+  </tbody>
+</table>
+<p>274 rows × 4 columns</p>
 </div>
 
 #### Use WhisperSeg in your Python code
