@@ -159,7 +159,7 @@ def submit_training_request():
         error_msg = {}
         ### always lower-case the model_name and initial_model_name
         model_name = request.form.get('model_name', type=str, default=None)
-        inital_model_name = request.form.get('inital_model_name', type=str, default=None)
+        initial_model_name = request.form.get('initial_model_name', type=str, default=None)
         num_epochs = request.form.get('num_epochs', type=int, default=3)
 
         illegal_strings = list(set(re.findall("[^a-zA-Z0-9\-\_\.]+", model_name )))
@@ -177,12 +177,12 @@ def submit_training_request():
             error_msg = {'error': 'Model name already exists'}
             assert False
 
-        if inital_model_name is None:
-            inital_model_name = "whisperseg-base"
-        inital_model_name = inital_model_name.lower().strip()
+        if initial_model_name is None:
+            initial_model_name = "whisperseg-base"
+        initial_model_name = initial_model_name.lower().strip()
         
-        if inital_model_name not in [ item["model_name"] for item in all_existing_models if item["finetune_model_path"] is not None ]:
-            error_msg = {'error': 'inital_model_name is not available for finetuning, call "list-models-available-for-finetuning" API to get the available model_name list'}
+        if initial_model_name not in [ item["model_name"] for item in all_existing_models if item["finetune_model_path"] is not None ]:
+            error_msg = {'error': 'initial_model_name is not available for finetuning, call "list-models-available-for-finetuning" API to get the available model_name list'}
             assert False
         
         # upload the training dataset
@@ -205,7 +205,7 @@ def submit_training_request():
         with threading.Lock():
             training_request_queue.append({
                 "model_name": model_name,
-                "inital_model_name":inital_model_name,
+                "initial_model_name":initial_model_name,
                 "train_dataset_folder":dataset_folder,
                 "num_epochs":num_epochs,
                 "status":"queuing"
@@ -284,13 +284,13 @@ def run_training_script( training_request_queue ):
             with threading.Lock():
                 training_request_queue[0]["status"] = "training"
             try:
-                inital_model_name = training_request_queue[0]["inital_model_name"]
-                inital_model_path = None
+                initial_model_name = training_request_queue[0]["initial_model_name"]
+                initial_model_path = None
                 for item in list_models():
-                    if item["model_name"] == inital_model_name and item["finetune_model_path"] is not None and item["status"] == "ready":
-                        inital_model_path = item["finetune_model_path"]
+                    if item["model_name"] == initial_model_name and item["finetune_model_path"] is not None and item["status"] == "ready":
+                        initial_model_path = item["finetune_model_path"]
                         break
-                assert inital_model_path is not None
+                assert initial_model_path is not None
 
                 model_folder = os.path.join( model_base_folder, training_request_queue[0]["model_name"] )
 
@@ -302,7 +302,7 @@ def run_training_script( training_request_queue ):
                     continue
                 
                 process_args = [ "python", os.path.join( script_parent_dirname, "train.py" ), 
-                            "--initial_model_path", inital_model_path,
+                            "--initial_model_path", initial_model_path,
                             "--train_dataset_folder", training_request_queue[0]["train_dataset_folder"] + "/",
                             "--model_folder", model_folder,
                             "--max_num_epochs", str( training_request_queue[0]["num_epochs"] ),

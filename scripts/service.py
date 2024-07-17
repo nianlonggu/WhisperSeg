@@ -178,11 +178,11 @@ def segment_audio( url, model_name, audio_path, min_frequency = None, spec_time_
                                           })
     return response.json()
 
-def submit_training_request( url, model_name, inital_model_name, uploaded_files, num_epochs = 3 ):
+def submit_training_request( url, model_name, initial_model_name, uploaded_files, num_epochs = 3 ):
     memory_file = create_zip_in_memory_given_uploaded_files(uploaded_files)
     files = {'zip': memory_file }
     response = requests.post(url, files=files, data = { "model_name":model_name,
-                                                        "inital_model_name":inital_model_name,
+                                                        "initial_model_name":initial_model_name,
                                                         "num_epochs":num_epochs
                                                       })
 
@@ -272,7 +272,7 @@ def handle_segmentation( flask_port, model_name, uploaded_files ):
 
     
 # Function to handle fine-tuning
-def handle_fine_tuning(flask_port, model_name, inital_model_name, uploaded_files):
+def handle_fine_tuning(flask_port, model_name, initial_model_name, uploaded_files):
     status_reporter = st.empty()
     model_list = [ item["model_name"] for item in list_all_models( flask_port )]
     model_name =  model_name.lower().strip()
@@ -285,7 +285,7 @@ def handle_fine_tuning(flask_port, model_name, inital_model_name, uploaded_files
         if len(illegal_strings) > 0:
             status_reporter.write("Error: '%s' not allowed in model name"%( " ".join( illegal_strings ) ))
         else:
-            response = submit_training_request( f"http://localhost:{flask_port}/submit-training-request", model_name, inital_model_name, uploaded_files )
+            response = submit_training_request( f"http://localhost:{flask_port}/submit-training-request", model_name, initial_model_name, uploaded_files )
             status_reporter.write( json.dumps( response ) )
     
 def display_segmentation_tab(flask_port):
@@ -326,7 +326,7 @@ def display_finetuning_tab(flask_port):
     uploaded_files = st.file_uploader("Upload Training Dataset (Paired audio file and annotation csv/json, e.g., exp1_sound1.wav, exp1_sound1.csv, exp1_sound2.wav, exp1_sound2.csv ... For detailed data strcuture please refer to https://github.com/nianlonggu/WhisperSeg/blob/master/docs/DatasetProcessing.md)" + " "*st.session_state["refresh_finetuning_tab"], accept_multiple_files=True, type=["wav", "csv","json"], key="finetune_audio")
     
     model_list = [ item["model_name"] for item in list_models_available_for_finetuning( flask_port )]
-    inital_model_name = st.selectbox("Select the model to use as the starting point for training", model_list, key="finetune_model")
+    initial_model_name = st.selectbox("Select the model to use as the starting point for training", model_list, key="finetune_model")
     model_name = st.text_input("Name your new fine-tuned model using letters, numbers, or '-'. Avoid special characters like /\\?|}!. Ensure the name is unique and not used by existing models.")
 
     cols = st.columns(7)
@@ -340,7 +340,7 @@ def display_finetuning_tab(flask_port):
                 st.rerun()
     if st.session_state["running_finetuning"]:
         st.session_state["running_finetuning"] = 0
-        handle_fine_tuning(flask_port, model_name, inital_model_name, uploaded_files)
+        handle_fine_tuning(flask_port, model_name, initial_model_name, uploaded_files)
     for _ in range(5):
         st.empty()
 
