@@ -159,10 +159,19 @@ if __name__ == "__main__":
     training_dataloader = DataLoader( training_dataset, batch_size = args.batch_size , shuffle = True , 
                                              worker_init_fn = lambda x:[np.random.seed( epoch  + x ),  
                                                                     torch.manual_seed( epoch + x) ], 
-                                             num_workers = args.num_workers , drop_last= True,
+                                             num_workers = args.num_workers, 
+                                             drop_last= True, 
                                              pin_memory = False
                                            )
-
+    if len(training_dataloader) == 0:
+        training_dataloader = DataLoader( training_dataset, batch_size = args.batch_size , shuffle = True , 
+                                             worker_init_fn = lambda x:[np.random.seed( epoch  + x ),  
+                                                                    torch.manual_seed( epoch + x) ], 
+                                             num_workers = args.num_workers, 
+                                             drop_last= False,  ## set drop_last to False to fully utilize small dataset
+                                             pin_memory = False
+                                           )
+    ## if the training dataset is really too small, then trigger the error
     if len(training_dataloader) == 0:
         print("Error: Too few examples (less than a batch) for training! Exit!")
         sys.exit(1)
