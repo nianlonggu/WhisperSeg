@@ -27,6 +27,7 @@ import hashlib
 import os
 import shutil
 import threading
+from copy import deepcopy
 
 def download_model( model_path, ignore_cache = False ):
     ## This model path is a local folder path
@@ -160,7 +161,7 @@ class SegmenterBase:
         return sliced_audios_features
         
     ## This is used for WhisperSegmenter and WhisperSegmenterFast, not for WhisperSegmenterForEval
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0, status_monitor = None ):
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0, status_monitor = None, suppress_clusters = None ):
         generated_texts_dict = {}
         all_threads = []
         num_examples_per_thread = int(np.ceil( len( sliced_audios_features ) / len( self.device_list ) ))
@@ -169,7 +170,8 @@ class SegmenterBase:
                                   args = ( sliced_audios_features[pos:pos+num_examples_per_thread],
                                            batch_size, max_length, num_beams, top_k, top_p, 
                                            length_penalty, generated_texts_dict, thread_id,
-                                           status_monitor if thread_id == 0 else None   ## pass the status_monitor only to the first thread
+                                           status_monitor if thread_id == 0 else None,   ## pass the status_monitor only to the first thread
+                                           suppress_clusters
                                          )
                                 )
             t.start()
@@ -404,7 +406,8 @@ class SegmenterBase:
                        top_k = 1, 
                        top_p = 1.0, 
                        length_penalty = 1.0,
-                       status_monitor = None 
+                       status_monitor = None,
+                       suppress_clusters = None
                ):
         if min_frequency is None:
             min_frequency = self.default_segmentation_config.get( "min_frequency", 0)
@@ -419,7 +422,7 @@ class SegmenterBase:
             time_per_frame_for_voting = spec_time_step
         
         sliced_audios_features = self.get_sliced_audios_features( audio, sr, min_frequency, spec_time_step, num_trials)
-        generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, length_penalty, status_monitor )
+        generated_text_list = self.generate_segment_text( sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, length_penalty, status_monitor, suppress_clusters )
         final_prediction = self.parse_generation( 
             generated_text_list, sliced_audios_features,
                          min_segment_length, 
@@ -564,9 +567,16 @@ class WhisperSegmenterForEval(SegmenterBase):
         self.inverse_cluster_codebook = { cluster_id:cluster for cluster, cluster_id in self.cluster_codebook.items() }
                 
 
-    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0, status_monitor = None ):
-        generated_text_list = []
+    def generate_segment_text( self, sliced_audios_features, batch_size, max_length, num_beams, top_k = 1, top_p = 1.0, length_penalty = 1.0, status_monitor = None, suppress_clusters = None ):
+
+        suppress_tokens = deepcopy(self.model.config.suppress_tokens)
+        if suppress_clusters is not None:
+            suppress_tokens = suppress_tokens + self.tokenizer.convert_tokens_to_ids([ str(self.cluster_codebook[k]) for k in self.cluster_codebook if k in suppress_clusters])
+        ## For HF model we cannot pass supress_tokens on the fly for some reason, so we directly change the suppress_tokens in generation_config
+        generation_config = deepcopy(self.model.generation_config)
+        generation_config.suppress_tokens = suppress_tokens
         
+        generated_text_list = []
         for pos in range( 0, len(sliced_audios_features), batch_size ):
             input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(self.device)
             generated_ids = self.model.generate( inputs = input_features,  
@@ -578,7 +588,8 @@ class WhisperSegmenterForEval(SegmenterBase):
                                                  do_sample = num_beams == 1,
                                                  top_k = top_k,
                                                  top_p = top_p,
-                                                 length_penalty = length_penalty
+                                                 length_penalty = length_penalty,
+                                                 generation_config = generation_config
                                                )
             generated_text_batch = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=False)
             generated_text_list += generated_text_batch
@@ -605,16 +616,24 @@ class WhisperSegmenter(SegmenterBase):
         
         if hasattr( self.model_list[0].config, "default_segmentation_config" ):
             self.default_segmentation_config.update( self.model_list[0].config.default_segmentation_config )
-        
-        
+                    
     def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
-                                          length_penalty,  generated_texts_dict, thread_id, status_monitor = None ):
+                                          length_penalty,  generated_texts_dict, thread_id, status_monitor = None, suppress_clusters = None ):
+        
         device = self.device_list[thread_id]
         model = self.model_list[thread_id]
         tokenizer = self.tokenizer_list[thread_id]
+
+        suppress_tokens = deepcopy(model.config.suppress_tokens)
+        if suppress_clusters is not None:
+            suppress_tokens = suppress_tokens + tokenizer.convert_tokens_to_ids([ str(self.cluster_codebook[k]) for k in self.cluster_codebook if k in suppress_clusters])
+        ## For HF model we cannot pass supress_tokens on the fly for some reason, so we directly change the suppress_tokens in generation_config
+        generation_config = deepcopy(model.generation_config)
+        generation_config.suppress_tokens = suppress_tokens
+        
         generated_text_list = []
         for pos in range( 0, len(sliced_audios_features), batch_size ):
-            input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(device)
+            input_features = torch.from_numpy( np.asarray([ item[2] for item in sliced_audios_features[pos:pos+batch_size] ]) ).to(device)        
             generated_ids = model.generate( inputs = input_features,  
                                                  decoder_input_ids = torch.LongTensor([ tokenizer.convert_tokens_to_ids( [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"] ) 
                                                                                           for _ in range( input_features.size(0) )]).to(device),
@@ -625,7 +644,8 @@ class WhisperSegmenter(SegmenterBase):
                                                  do_sample = num_beams == 1,
                                                  top_k = top_k,
                                                  top_p = top_p,
-                                                 length_penalty = length_penalty
+                                                 length_penalty = length_penalty,
+                                                 generation_config = generation_config
                                                )
             generated_text_batch = tokenizer.batch_decode(generated_ids, skip_special_tokens=False)
             generated_text_list += generated_text_batch
@@ -664,11 +684,18 @@ class WhisperSegmenterFast(SegmenterBase):
         if "default_segmentation_config" in model_config:
             self.default_segmentation_config.update( model_config["default_segmentation_config"] )
 
+        self.default_suppress_tokens = model_config["suppress_tokens"]
+    
     def generate_segment_text_core( self, sliced_audios_features, batch_size, max_length, num_beams, top_k, top_p, 
-                                          length_penalty, generated_texts_dict, thread_id, status_monitor = None ):
+                                          length_penalty, generated_texts_dict, thread_id, status_monitor = None, suppress_clusters = None ):
         
         tokenizer = self.tokenizer_list[thread_id]
         model = self.model_list[thread_id]
+
+        suppress_tokens = deepcopy(self.default_suppress_tokens)
+        if suppress_clusters is not None:
+            suppress_tokens = suppress_tokens + tokenizer.convert_tokens_to_ids([ str(self.cluster_codebook[k]) for k in self.cluster_codebook if k in suppress_clusters])
+        
         generated_text_list = []
         for pos in range( 0, len(sliced_audios_features), batch_size ):
             
@@ -686,7 +713,8 @@ class WhisperSegmenterFast(SegmenterBase):
             model_output = model.generate(features, [ prompt for _ in range(actual_batch_size) ], 
                                                  max_length = max_length, beam_size = num_beams,
                                                  sampling_topk = top_k,
-                                                 length_penalty = length_penalty
+                                                 length_penalty = length_penalty,
+                                                 suppress_tokens = suppress_tokens
                                               )
             generated_text_batch = []
             for item in model_output:
