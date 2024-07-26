@@ -229,6 +229,7 @@ def segment():
         min_frequency = request.form.get('min_frequency', type=int, default=None)
         spec_time_step = request.form.get('spec_time_step', type=float, default=None)
         channel_id = request.form.get('channel_id', type=int, default=0)
+        num_trials = request.form.get('num_trials', type=int, default=1)
 
         if 'audio_file' not in request.files:
             error_msg = {'error': 'No audio_file is provided'}
@@ -265,7 +266,7 @@ def segment():
             error_msg = {'error': 'audio loading failed' }
             assert False
         
-        prediction = segmenter.segment( audio, sr, min_frequency = min_frequency, spec_time_step = spec_time_step, num_trials = 3, batch_size = 8 )  
+        prediction = segmenter.segment( audio, sr, min_frequency = min_frequency, spec_time_step = spec_time_step, num_trials = num_trials, batch_size = 8 )  
 
     except:
         sem.release()

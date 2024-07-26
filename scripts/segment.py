@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=8, type=int)
     parser.add_argument("--min_frequency", default= None, type=int)
     parser.add_argument("--spec_time_step", default= None, type=float)
-    parser.add_argument("--num_trials", default= 3, type=int)
+    parser.add_argument("--num_trials", default= 1, type=int)
     args = parser.parse_args()
 
     assert args.csv_save_path.endswith(".csv") or args.csv_save_path == "buffer", "csv_save_path must ends with .csv or be 'buffer'"
