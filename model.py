@@ -396,7 +396,7 @@ class SegmenterBase:
     def segment( self, audio, sr,
                        min_frequency = 0,
                        spec_time_step = 0.0025,
-                       min_segment_length = 0.02,
+                       min_segment_length = 0.01,
                        eps = 0.02,  ## for DBSCAN clustering
                        time_per_frame_for_voting = 0.001, ## for voting
                        consolidation_method = "clustering",

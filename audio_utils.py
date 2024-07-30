@@ -187,6 +187,7 @@ class SpecViewer:
         
         y_offset = spec.shape[0]  
         if audio_channel_names is not None and isinstance( audio_channel_names, list ):
+            audio_channel_names = list(reversed(audio_channel_names))
             for channel_idx in range( min( audio.shape[0], len(audio_channel_names) ) ):
                 ax.text(x_offset + 20, (y_offset // audio.shape[0]) * (channel_idx + 0.6) , audio_channel_names[channel_idx], fontfamily = "monospace" )
         
