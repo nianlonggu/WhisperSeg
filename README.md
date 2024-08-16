@@ -244,8 +244,8 @@ python scripts/segment.py --model_path nccratliri/whisperseg-animal-vad-ct2 --au
 <p>274 rows × 4 columns</p>
 </div>
 
-#### Use WhisperSeg in your Python code
-Please refer to the section [**Voice Activity Detection Demo**](README.md#voice-activity-detection-demo) below.
+#### Use WhisperSeg in Python code
+Please refer to the section [**Use WhisperSeg in Python Code**](README.md#use-whisperseg-in-python-code) below.
 
 #### Run WhisperSeg as a Web Service, and call it via API
 Please refer to the tutorial: [**Run WhisperSeg as a Web Service**](docs/RunWhisperSegAsWebService.md)  
@@ -254,7 +254,7 @@ Please refer to the tutorial: [**Run WhisperSeg as a Web Service**](docs/RunWhis
 #### Try WhisperSeg on a GUI (Webpage)
 Please refer to the tutorial: [**Run WhisperSeg via GUI**](docs/RunWhisperSegViaGUI.md)
 
-## Voice Activity Detection Demo<a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Voice_Activity_Detection_Demo.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+## Use WhisperSeg in Python Code<a href="https://colab.research.google.com/github/nianlonggu/WhisperSeg/blob/master/docs/WhisperSeg_Voice_Activity_Detection_Demo.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 We demonstrate here using a WhisperSeg trained on multi-species data to segment the audio files of different species.
 
 **Note:** If you are using your custom models, replace the model's name ("nccratliri/whisperseg-large-ms" or "nccratliri/whisperseg-large-ms-ct2") with your own trained model's name.
