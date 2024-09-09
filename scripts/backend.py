@@ -30,6 +30,11 @@ from pathlib import Path
 import GPUtil
 import zipfile
 
+
+## extended features to post process WhisperSeg prediction
+from scripts.post_process_predictions import PROCESS_TOOLBOX
+
+
 # Make Flask application
 app = Flask(__name__)
 CORS(app)
@@ -267,6 +272,19 @@ def segment():
             assert False
         
         prediction = segmenter.segment( audio, sr, min_frequency = min_frequency, spec_time_step = spec_time_step, num_trials = num_trials, batch_size = 8 )  
+
+
+        ## post process WhisperSeg output
+        if model_name in PROCESS_TOOLBOX:
+            process_func = PROCESS_TOOLBOX[model_name]
+            prediction_df = pd.DataFrame( prediction )
+            new_prediction_df = process_func( prediction_df )
+            prediction = {
+                "onset":new_prediction_df["onset"].tolist(),
+                "offset":new_prediction_df["offset"].tolist(),
+                "cluster":new_prediction_df["cluster"].tolist()
+            }
+            
 
     except:
         sem.release()
