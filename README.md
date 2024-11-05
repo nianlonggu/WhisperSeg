@@ -14,6 +14,8 @@ conda create -n wseg python=3.10 -y
 conda activate wseg
 pip install -r requirements.txt
 conda install conda-forge::cudnn==8.9.7.29 -y
+## suppose CUDA version is 12.1, for other version, please refer to https://pytorch.org/get-started/locally/
+pip install --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
 **NOTE for Windows OS:** For method 1 and 2, if running WhisperSeg on windows, one need to further uninstall 'bitsandbytes' by 

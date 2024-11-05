@@ -49,8 +49,17 @@ def base64_string_to_bytes(base64_string):
 
 def get_gpu_memory():
     try:
+        # Get the CUDA_VISIBLE_DEVICES variable and split it into a list of GPU IDs
+        cuda_visible_devices = os.environ.get("CUDA_VISIBLE_DEVICES", "")
+        if cuda_visible_devices:
+            visible_gpus = list(map(int, cuda_visible_devices.split(",")))
+        else:
+            visible_gpus = []
+            
         # Get the list of available GPUs
         gpus = GPUtil.getGPUs()
+        # Get GPUs constrained by CUDA_VISIBLE_DEVICES
+        gpus = [gpu for gpu in gpus if gpu.id in visible_gpus]
 
         # Check if GPU 0 is available
         if len(gpus) > 0:
@@ -102,7 +111,8 @@ def list_models():
 
     for item in all_models:
         if item["status"] == "training":
-            training_status_fname = os.path.join( model_base_folder, name, "status.json" )
+            # training_status_fname = os.path.join( model_base_folder, name, "status.json" )
+            training_status_fname = os.path.join( model_base_folder, item["model_name"], "status.json" )
             try:
                 status_data = json.load( open( training_status_fname ) )
                 eta = status_data["eta"]
