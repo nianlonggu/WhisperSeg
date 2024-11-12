@@ -54,12 +54,13 @@ def get_gpu_memory():
         if cuda_visible_devices:
             visible_gpus = list(map(int, cuda_visible_devices.split(",")))
         else:
-            visible_gpus = []
+            visible_gpus = None # use any GPU if CUDA_VISIBLE_DEVICES not specified
             
         # Get the list of available GPUs
         gpus = GPUtil.getGPUs()
         # Get GPUs constrained by CUDA_VISIBLE_DEVICES
-        gpus = [gpu for gpu in gpus if gpu.id in visible_gpus]
+        if visible_gpus is not None:
+            gpus = [gpu for gpu in gpus if gpu.id in visible_gpus]
 
         # Check if GPU 0 is available
         if len(gpus) > 0:
