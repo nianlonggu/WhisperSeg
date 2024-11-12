@@ -28,11 +28,12 @@ For example, we are segmenting a zebra finch recording:
 ```python
 import requests,json,base64
 import pandas as pd
+import librosa
 
 ## define a function for segmentation
 def call_segment_service( service_address, 
                           audio_file_path,
-                          sr,
+                          sr = None,
                           channel_id = 0,
                           min_frequency=None,
                           spec_time_step=None,
@@ -41,6 +42,8 @@ def call_segment_service( service_address,
                           num_trials=3,
                           adobe_audition_compatible=False
                         ):
+    if sr is None:
+        sr = librosa.get_samplerate(audio_file_path)
     audio_file_base64_string = base64.b64encode( open(audio_file_path, 'rb').read()).decode('ASCII')
     response = requests.post( service_address,
                               data = json.dumps( {
@@ -71,15 +74,10 @@ def call_segment_service( service_address,
 ```python
 prediction = call_segment_service( "http://localhost:8050/segment", 
                           "../data/example_subset/Zebra_finch/test_adults/zebra_finch_g17y2U-f00007.wav",  
-                          sr = 32000,
                           adobe_audition_compatible = True
                         )
 ## we can convert the returned dictionary into a pandas Dataframe
 df = pd.DataFrame(prediction)
-```
-
-
-```python
 df
 ```
 
@@ -283,9 +281,8 @@ df.to_csv( "prediction_result.csv", index = False, sep="\t")
 
 
 ```python
-prediction = call_segment_service( "http://localhost:8051/segment", 
+prediction = call_segment_service( "http://localhost:8050/segment", 
                           "../data/example_subset/Zebra_finch/test_adults/zebra_finch_g17y2U-f00007.wav",  
-                          sr = 32000,
                           adobe_audition_compatible = False
                         )
 ## we can convert the returned dictionary into a pandas Dataframe
