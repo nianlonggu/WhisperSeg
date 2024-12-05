@@ -1,0 +1,6 @@
+[console_scripts]
+whisperseg-debug = whisperseg.scripts.debug:main
+whisperseg-gui = whisperseg.scripts.gui_launcher:main
+whisperseg-segment = whisperseg.segment:main
+whisperseg-server = whisperseg.scripts.server:main
+whisperseg-train = whisperseg.scripts.train_launcher:main

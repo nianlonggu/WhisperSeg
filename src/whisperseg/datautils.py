@@ -6,8 +6,8 @@ import threading
 from torch.utils.data import Dataset, DataLoader
 from copy import deepcopy
 import json
-from audio_utils import WhisperSegFeatureExtractor
-from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+from whisperseg.audio_utils import WhisperSegFeatureExtractor
+from whisperseg.utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
 import soundfile as sf
 
 def get_sampling_rate(file_path):

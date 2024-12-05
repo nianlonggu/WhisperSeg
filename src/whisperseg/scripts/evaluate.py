@@ -1,9 +1,9 @@
-from model import WhisperSegmenterFast, WhisperSegmenter
+from whisperseg.model import WhisperSegmenterFast, WhisperSegmenter
 import librosa
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
-from datautils import get_audio_and_label_paths, read_label
+from whisperseg.datautils import get_audio_and_label_paths, read_label
 import os
 
 def evaluate( audio_list, label_list, segmenter, batch_size, max_length, num_trials, num_beams=4, target_cluster = None ):

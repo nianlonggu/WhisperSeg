@@ -1,22 +1,16 @@
 import sys
 import os
-script_dirname = os.path.dirname(os.path.abspath(__file__))
-script_parent_dirname = os.path.dirname(script_dirname)
-sys.path.insert(0, script_parent_dirname)
-runtime_dirname = os.getcwd()
-
 import argparse
 import json
 import requests
 from datetime import datetime
 from flask import Flask, jsonify, abort, make_response, request, Response
 from flask_cors import CORS
-from model import WhisperSegmenter, WhisperSegmenterFast
+from whisperseg.model import WhisperSegmenter, WhisperSegmenterFast
 import librosa
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-import os
 import time
 import threading
 import base64
@@ -29,11 +23,9 @@ import re
 from pathlib import Path
 import GPUtil
 import zipfile
-
-
 ## extended features to post process WhisperSeg prediction
-from scripts.post_process_predictions import PROCESS_TOOLBOX
-
+from whisperseg.scripts.post_process_predictions import PROCESS_TOOLBOX
+from whisperseg.model import load_model
 
 # Make Flask application
 app = Flask(__name__)
@@ -46,6 +38,12 @@ def bytes_to_base64_string(f_bytes):
 
 def base64_string_to_bytes(base64_string):
     return base64.b64decode(base64_string)
+
+def estimate_gpu_usage_requirement( model_path, batch_size_per_device = 4 ):
+    model, _ = load_model(model_path, total_spec_columns = 1000)
+    num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    estimated_gpu_usage = num_parameters / 1550000000 * 40000 * (batch_size_per_device / 4)
+    return estimated_gpu_usage
 
 def get_gpu_memory():
     try:
@@ -296,7 +294,6 @@ def segment():
                 "cluster":new_prediction_df["cluster"].tolist()
             }
             
-
     except:
         sem.release()
         return jsonify({"onset":[],
@@ -326,12 +323,13 @@ def run_training_script( training_request_queue ):
 
                 ## pause when GPU is currently busy for other tasks
                 gpu_free_memory, gpu_total_memory = get_gpu_memory() 
-                if gpu_free_memory is None or gpu_total_memory is None or gpu_free_memory / gpu_total_memory < 0.7:
-                    print("Warning: GPU may be unavailable or insufficient for training. Pending ...")
+                estimated_gpu_usage = estimate_gpu_usage_requirement( initial_model_path )
+                if gpu_free_memory < estimated_gpu_usage:
+                    print("Warning: Free GPU memory is insufficient. Trying again in one minute ...")
                     time.sleep(60)
                     continue
-                
-                process_args = [ "python", os.path.join( script_parent_dirname, "train.py" ), 
+                    
+                process_args = [ "whisperseg-train",  
                             "--initial_model_path", initial_model_path,
                             "--train_dataset_folder", training_request_queue[0]["train_dataset_folder"] + "/",
                             "--model_folder", model_folder,
@@ -346,13 +344,15 @@ def run_training_script( training_request_queue ):
                 training_request_queue.pop(0)
         time.sleep(5)
 
-
-if __name__ == '__main__':
+def main():
+    global dataset_base_folder, model_base_folder, max_num_segmenters_in_ram, pretrained_models, training_request_queue, sem, running_segmenters, model_information
     parser = argparse.ArgumentParser()
     parser.add_argument("--flask_port", help="The port of the flask app.", default=8060, type=int)
     parser.add_argument("--dataset_base_folder", help="The folder that stores the uploaded dataset.", type=str)
     parser.add_argument("--model_base_folder", help="The folder that stores the finetuned models.", type=str)
     parser.add_argument("--max_num_segmenters_in_ram", default=1, type=int)
+    parser.add_argument("--inference_models", default=[], type = str, nargs = "+")
+    parser.add_argument("--training_models", default=[], type = str, nargs = "+")
     
     args = parser.parse_args()
 
@@ -370,6 +370,16 @@ if __name__ == '__main__':
                             "inference_model_path": "nccratliri/whisperseg-animal-vad-ct2",
                             "finetune_model_path": "nccratliri/whisperseg-animal-vad"},
                         ]
+    for model_path in args.inference_models:
+        pretrained_models += [ { "model_name":model_path, 
+                            "inference_model_path": model_path,
+                            "finetune_model_path": None }  ]
+    for model_path in args.training_models:
+        pretrained_models += [ { "model_name":model_path, 
+                            "inference_model_path": None,
+                            "finetune_model_path": model_path }  ]
+        
+    
     training_request_queue = list()
     sem = threading.Semaphore()
     running_segmenters = {}
@@ -383,3 +393,5 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=args.flask_port, threaded = True )
 
 
+if __name__ == '__main__':
+    main()

@@ -1,53 +1,24 @@
-import os,sys,inspect
-script_dirname = os.path.dirname(os.path.abspath(__file__))
+import os,sys
 from tqdm import tqdm
 import shutil
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import time
-import shutil
 import json
 import wandb
 import argparse
-from audio_utils import SpecViewer, WhisperSegFeatureExtractor
-from utils import *
-from model import *
-from datautils import *
-from evaluate import evaluate
+from whisperseg.audio_utils import SpecViewer, WhisperSegFeatureExtractor
+from whisperseg.utils import *
+from whisperseg.model import *
+from whisperseg.datautils import *
+from whisperseg.scripts.evaluate import evaluate
 import subprocess
-import json
-
 from transformers import AdamW, get_linear_schedule_with_warmup
 
-def train_iteration(batch):
-    for key in batch:
-        batch[key] = batch[key].to(device)
-    
-    optimizer.zero_grad()
-    with torch.amp.autocast(device_type="cuda", dtype=torch.float16):   
-        model_out = model( **batch )
-        loss = model_out.loss.mean()
-    scaler.scale(loss).backward()
-    scaler.step(optimizer)
-    # optimizer.step()
-    scaler.update()
-    
-    """ 
-    # normal version without float16 speedup
-    optimizer.zero_grad()
-    model_out = model( **batch )
-    loss = model_out.loss.mean()
-    loss.backward()    
-    optimizer.step()
-    """
-    return loss.item()
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-
-if __name__ == "__main__":
-    
+def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--initial_model_path" )
@@ -84,6 +55,31 @@ if __name__ == "__main__":
     parser.add_argument("--clear_cluster_codebook", type = int, help="set the pretrained model's cluster_codebook to empty dict. This is used when we train the segmenter on a complete new dataset. Set this to 0 if you just want to slighlt finetune the model with some additional data with the same cluster naming rule.", default = 1 )
     
     args = parser.parse_args()
+
+
+    def train_iteration(batch):
+        for key in batch:
+            batch[key] = batch[key].to(device)
+        
+        optimizer.zero_grad()
+        with torch.amp.autocast(device_type="cuda", dtype=torch.float16):   
+            model_out = model( **batch )
+            loss = model_out.loss.mean()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        # optimizer.step()
+        scaler.update()
+        
+        """ 
+        # normal version without float16 speedup
+        optimizer.zero_grad()
+        model_out = model( **batch )
+        loss = model_out.loss.mean()
+        loss.backward()    
+        optimizer.step()
+        """
+        return loss.item()
+    
 
     if args.use_wandb:
         wandb.init( project = args.project, name = args.run_name )
@@ -308,15 +304,18 @@ if __name__ == "__main__":
         hf_model_folder = args.model_folder+"/final_checkpoint"
         ct2_model_folder = hf_model_folder + "_ct2"
         
-        subprocess.run([ "python", os.path.join( script_dirname, "convert_hf_to_ct2.py" ), 
+        subprocess.run([ "python", os.path.join( SCRIPT_DIR, "convert_hf_to_ct2.py" ), 
                          "--model", hf_model_folder,
                          "--output_dir", ct2_model_folder,
-                         "--quantization", "int8_float16"
+                         "--quantization", "float16"
                        ])
     try:
         os.remove( args.model_folder + "/status.json" )
     except:
         pass
     
-    print("All Done!")    
+    print("All Done!")  
 
+
+if __name__ == "__main__":
+    main()

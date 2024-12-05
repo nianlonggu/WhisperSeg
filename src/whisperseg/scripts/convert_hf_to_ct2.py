@@ -8,7 +8,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str,  )
     parser.add_argument("--output_dir", type=str,  )
-    parser.add_argument("--quantization", default = "int8_float16", help="can be int8, float16 and int8_float16, if it is not set (None), then do not apply quantization"  )
+    parser.add_argument("--quantization", default = "float16" )
     parser.add_argument("--load_as_float16", action="store_true" )
     parser.add_argument("--low_cpu_mem_usage", action="store_true" )
     parser.add_argument("--trust_remote_code", action="store_true" )

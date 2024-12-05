@@ -1,6 +1,6 @@
 import sys
 import os
-script_dirname = os.path.dirname(os.path.abspath(__file__))
+from importlib.resources import files
 from streamlit_elements import elements, mui, dashboard
 import re
 import streamlit as st
@@ -69,18 +69,23 @@ def convert_df_to_datagrid_format(df):
             row['id'] = i + 1
     return {'columns': columns, 'rows': rows}
 
-def start_backend_service( flask_port, dataset_base_folder, model_base_folder ):
-    subprocess.run( [ "python", os.path.join( script_dirname, "backend.py" ),
+def start_backend_service( flask_port, dataset_base_folder, model_base_folder, inference_models, training_models ):
+    cmd = [ "whisperseg-server", 
                       "--flask_port", str( flask_port ),
                       "--dataset_base_folder", str(dataset_base_folder), 
                       "--model_base_folder", str(model_base_folder)
-                    ] )
+                    ]
+    if len(inference_models) > 0:
+        cmd += [ "--inference_models" ] + inference_models
+    if len( training_models ) > 0:
+        cmd += [ "--training_models" ] + training_models
+    subprocess.run( cmd )
 
 @st.cache_resource
-def init( flask_port, dataset_base_folder, model_base_folder ):
+def init( flask_port, dataset_base_folder, model_base_folder, inference_models, training_models ):
     print(datetime.now(), "backend service started!")
     t = threading.Thread( target = start_backend_service, 
-                          args = ( flask_port, dataset_base_folder, model_base_folder ),
+                          args = ( flask_port, dataset_base_folder, model_base_folder, inference_models, training_models ),
                           daemon = True
                         )
     t.start()
@@ -147,9 +152,9 @@ def init_varaiables():
     if "all_model_list" not in st.session_state:
         st.session_state["all_model_list"] = []
     if "queuing_gif" not in st.session_state:
-        st.session_state["queuing_gif"] = get_gif_base64( script_dirname + "/assets/" + "queuing.gif"  )
+        st.session_state["queuing_gif"] = get_gif_base64( files('whisperseg').joinpath('assets/queuing.gif').absolute() )
     if "training_gif" not in st.session_state:
-        st.session_state["training_gif"] = get_gif_base64( script_dirname + "/assets/" + "training.gif"  )
+        st.session_state["training_gif"] = get_gif_base64( files('whisperseg').joinpath('assets/training.gif').absolute() )
     if "rerun_now" not in st.session_state:
         st.session_state["rerun_now"] = False
     if "segmentation_status" not in st.session_state:
@@ -302,7 +307,7 @@ def display_segmentation_tab(flask_port):
     with cols[1]:
         st.number_input('Minimum Frequency (Hz)', value= 0, key = "min_frequency", step = 1)
     with cols[2]:
-        st.checkbox('Output CSV Adobe Audition Compatible', value=True, key = "adobe_audition_compatible")     
+        st.checkbox('Output CSV Adobe Audition Compatible', value=False, key = "adobe_audition_compatible")     
     
     cols = st.columns(7)
     with cols[0]:
@@ -384,9 +389,11 @@ def display_model_list_tab(flask_port):
                         
 def main():
     parser = argparse.ArgumentParser(description='App external parameters')
-    parser.add_argument("--backend_flask_port", help="The port of the backend flask app.", default=8060, type=int)
-    parser.add_argument("--backend_dataset_base_folder", help="The folder that stores the uploaded dataset.", type=str)
-    parser.add_argument("--backend_model_base_folder", help="The folder that stores the finetuned models.", type=str)
+    parser.add_argument("--backend_port", help="The port of the backend flask app.", default=8060, type=int)
+    parser.add_argument("--dataset_base_folder", help="The folder that stores the uploaded dataset.", type=str)
+    parser.add_argument("--model_base_folder", help="The folder that stores the finetuned models.", type=str)
+    parser.add_argument("--inference_models", default=[], type = str, nargs = "+")
+    parser.add_argument("--training_models", default=[], type = str, nargs = "+")
     try:
         args = parser.parse_args()
     except SystemExit as e:
@@ -395,7 +402,7 @@ def main():
         # so we have to do a hard exit.
         os._exit(e.code)
     
-    init( args.backend_flask_port, args.backend_dataset_base_folder, args.backend_model_base_folder )
+    init( args.backend_port, args.dataset_base_folder, args.model_base_folder, args.inference_models, args.training_models )
     init_varaiables()
     remove_streamlit_style()
     
@@ -406,11 +413,11 @@ def main():
     tabs = st.tabs(tab_names)
 
     with tabs[0]:
-        display_segmentation_tab(args.backend_flask_port)
+        display_segmentation_tab(args.backend_port)
     with tabs[1]:
-        display_finetuning_tab(args.backend_flask_port)
+        display_finetuning_tab(args.backend_port)
     with tabs[2]:
-        display_model_list_tab(args.backend_flask_port)
+        display_model_list_tab(args.backend_port)
 
     time.sleep(5)
     st.rerun()

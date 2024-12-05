@@ -1,12 +1,6 @@
-import sys
 import os
-# sys.path.insert(0, os.path.dirname(os.getcwd()))
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.insert(0, parent_dir)
-
 import argparse
-from model import WhisperSegmenter, WhisperSegmenterFast
+from whisperseg.model import WhisperSegmenter, WhisperSegmenterFast
 import librosa
 import numpy as np
 from tqdm import tqdm
@@ -15,7 +9,7 @@ from glob import glob
 import time
 import io
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path")
     parser.add_argument("--audio_path", default = None, help="The file path to the audio .wav file")
@@ -71,4 +65,6 @@ if __name__ == "__main__":
     else:
         df.to_csv(args.csv_save_path, index=False)
 
-    
+
+if __name__ == "__main__":
+    main()

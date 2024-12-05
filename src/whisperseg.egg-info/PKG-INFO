@@ -1,3 +1,37 @@
+Metadata-Version: 2.1
+Name: whisperseg
+Version: 0.1.0
+Summary: Audio segmentation tool using Whisper
+Author-email: Nianlong Gu <nianlonggu@gmail.com>
+Requires-Python: <3.12,>=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: transformers==4.46.3
+Requires-Dist: peft==0.13.2
+Requires-Dist: accelerate==1.1.1
+Requires-Dist: bitsandbytes==0.44.1
+Requires-Dist: datasets==3.1.0
+Requires-Dist: numpy==2.0.2
+Requires-Dist: scipy==1.14.1
+Requires-Dist: wandb
+Requires-Dist: nltk
+Requires-Dist: ctranslate2==4.5.0
+Requires-Dist: ipykernel==6.29.5
+Requires-Dist: sentencepiece==0.2.0
+Requires-Dist: librosa==0.10.2.post1
+Requires-Dist: ipywidgets==8.1.5
+Requires-Dist: matplotlib==3.9.3
+Requires-Dist: moviepy==2.1.1
+Requires-Dist: flask
+Requires-Dist: flask-cors
+Requires-Dist: streamlit
+Requires-Dist: plotly==5.24.1
+Requires-Dist: evaluate==0.4.3
+Requires-Dist: jiwer
+Requires-Dist: streamlit-elements
+Requires-Dist: streamlit-autorefresh
+Requires-Dist: gputil
+Requires-Dist: chardet
+
 # Positive Transfer Of The Whisper Speech Transformer To Human And Animal Voice Activity Detection
 We proposed **WhisperSeg**, utilizing the Whisper Transformer pre-trained for Automatic Speech Recognition (ASR) for both human and animal Voice Activity Detection (VAD). For more details, please refer to our paper:
 > [**Positive Transfer of the Whisper Speech Transformer to Human and Animal Voice Activity Detection**](https://doi.org/10.1101/2023.09.30.560270)
@@ -16,14 +50,7 @@ conda create -n whisperseg python=3.10 conda-forge::cudnn -y
 conda activate whisperseg
 ```
 ### Install whisperseg
-```bash
 pip install -e .
-```
-
-
-
-
-
 
 
 

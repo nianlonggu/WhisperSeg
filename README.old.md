@@ -16,14 +16,7 @@ conda create -n whisperseg python=3.10 conda-forge::cudnn -y
 conda activate whisperseg
 ```
 ### Install whisperseg
-```bash
 pip install -e .
-```
-
-
-
-
-
 
 
 

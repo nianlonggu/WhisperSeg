@@ -15,12 +15,12 @@ from matplotlib.patches import Patch
 import matplotlib.cm as cm
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import DBSCAN
-from audio_utils import WhisperSegFeatureExtractor
+from whisperseg.audio_utils import WhisperSegFeatureExtractor
 import time
 from PIL import Image
 from scipy.stats import mode
 
-from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+from whisperseg.utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
 
 from huggingface_hub import snapshot_download
 import hashlib
@@ -111,7 +111,7 @@ def load_model( initial_model_path, total_spec_columns, dropout = 0.0):
         
 class SegmenterBase:
     def __init__( self,  ):
-        self.segment_matcher = re.compile("<\|([0-9]+)\|>(\d+?)<\|([0-9]+)\|>")
+        self.segment_matcher = re.compile(r"<\|([0-9]+)\|>(\d+?)<\|([0-9]+)\|>")
         self.total_spec_columns = None
         self.precision_bits = 3
         self.cluster_codebook = None
@@ -575,7 +575,7 @@ class WhisperSegmenterForEval(SegmenterBase):
                                                  eos_token_id = self.tokenizer.eos_token_id,
                                                  max_length = max_length,
                                                  num_beams = num_beams,
-                                                 do_sample = num_beams == 1,
+                                                 do_sample = num_beams == 1 and top_k > 1,
                                                  top_k = top_k,
                                                  top_p = top_p,
                                                  length_penalty = length_penalty
@@ -622,7 +622,7 @@ class WhisperSegmenter(SegmenterBase):
                                                  eos_token_id = tokenizer.eos_token_id,
                                                  max_length = max_length,
                                                  num_beams = num_beams,
-                                                 do_sample = num_beams == 1,
+                                                 do_sample = num_beams == 1 and top_k > 1,
                                                  top_k = top_k,
                                                  top_p = top_p,
                                                  length_penalty = length_penalty
@@ -682,7 +682,7 @@ class WhisperSegmenterFast(SegmenterBase):
                 [ "<|startoftranscript|>", "<|en|>", "<|notimestamps|>"]
             )
             ## the ctranslate converted model typically requires a larger max length than the one required by the original huggingface model, so we set max_length to a large value.
-            ## Note Ctranslate Whisper does not support top_p sampling
+            ## Note Ctranslate Whisper does not support top_p sampling         
             model_output = model.generate(features, [ prompt for _ in range(actual_batch_size) ], 
                                                  max_length = max_length, beam_size = num_beams,
                                                  sampling_topk = top_k,
