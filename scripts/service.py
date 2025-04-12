@@ -78,12 +78,17 @@ def start_backend_service( flask_port, dataset_base_folder, model_base_folder ):
 
 @st.cache_resource
 def init( flask_port, dataset_base_folder, model_base_folder ):
-    print(datetime.now(), "backend service started!")
-    t = threading.Thread( target = start_backend_service, 
+
+    try:
+        t = threading.Thread( target = start_backend_service, 
                           args = ( flask_port, dataset_base_folder, model_base_folder ),
                           daemon = True
                         )
-    t.start()
+        t.start()
+        print(datetime.now(), "backend service started!")
+    except:
+        print("Warning: backend start failed!")
+    
     ## wait until the backend service is ready 
     while True:
         try:
@@ -385,8 +390,8 @@ def display_model_list_tab(flask_port):
 def main():
     parser = argparse.ArgumentParser(description='App external parameters')
     parser.add_argument("--backend_flask_port", help="The port of the backend flask app.", default=8060, type=int)
-    parser.add_argument("--backend_dataset_base_folder", help="The folder that stores the uploaded dataset.", type=str)
-    parser.add_argument("--backend_model_base_folder", help="The folder that stores the finetuned models.", type=str)
+    parser.add_argument("--backend_dataset_base_folder", help="The folder that stores the uploaded dataset.", type=str, default = None)
+    parser.add_argument("--backend_model_base_folder", help="The folder that stores the finetuned models.", type=str, default = None)
     try:
         args = parser.parse_args()
     except SystemExit as e:
