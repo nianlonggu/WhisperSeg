@@ -82,6 +82,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_workers", type = int, default = 4 )
     
     parser.add_argument("--clear_cluster_codebook", type = int, help="set the pretrained model's cluster_codebook to empty dict. This is used when we train the segmenter on a complete new dataset. Set this to 0 if you just want to slighlt finetune the model with some additional data with the same cluster naming rule.", default = 1 )
+
+    parser.add_argument("--ignore_cluster", type = int, default = 0, help="whether to ignore the cluster definitions by forcing all cluster type into a default value 'Vocal' " )
     
     args = parser.parse_args()
 
@@ -138,15 +140,15 @@ if __name__ == "__main__":
 
     audio_path_list_train, label_path_list_train = get_audio_and_label_paths( args.train_dataset_folder ) 
 
-    default_config = determine_default_config(audio_path_list_train, label_path_list_train, args.total_spec_columns)
+    default_config = determine_default_config(audio_path_list_train, label_path_list_train, args.total_spec_columns, ignore_cluster = args.ignore_cluster )
     ## store the default segmentation config
     segmenter.model.config.default_segmentation_config = default_config
     segmenter.default_segmentation_config = default_config
     
-    cluster_codebook = get_cluster_codebook( label_path_list_train, segmenter.cluster_codebook )
+    cluster_codebook = get_cluster_codebook( label_path_list_train, segmenter.cluster_codebook, ignore_cluster = args.ignore_cluster )
     segmenter.update_cluster_codebook( cluster_codebook )
     
-    audio_list_train, label_list_train = load_data(audio_path_list_train, label_path_list_train, cluster_codebook = cluster_codebook, n_threads = 20, default_config = default_config )
+    audio_list_train, label_list_train = load_data(audio_path_list_train, label_path_list_train, cluster_codebook = cluster_codebook, n_threads = 20, default_config = default_config, ignore_cluster = args.ignore_cluster )
 
     if args.val_ratio > 0:
         (audio_list_train, label_list_train), ( audio_list_val, label_list_val ) = train_val_split( audio_list_train, label_list_train, args.val_ratio )

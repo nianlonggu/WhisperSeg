@@ -1,0 +1,19 @@
+FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
+
+# Add cuDNN library paths
+ENV LD_LIBRARY_PATH=/opt/conda/lib/python3.10/site-packages/torch/lib:$LD_LIBRARY_PATH
+ENV DATA_FOLDER=/app/data
+ENV MODEL_FOLDER=/app/model
+
+# Refresh library cache
+RUN ldconfig
+
+WORKDIR /app
+
+COPY requirements-whisperseg.txt .
+
+RUN pip install -r requirements-whisperseg.txt
+
+COPY . .
+
+CMD ["python", "scripts/backend.py", "--flask_port", "8080", "--dataset_base_folder", "/app/data", "--model_base_folder", "/app/model"]

@@ -6,16 +6,10 @@ import threading
 from torch.utils.data import Dataset, DataLoader
 from copy import deepcopy
 import json
-from audio_utils import WhisperSegFeatureExtractor
+from audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr, get_audio_duration, get_sampling_rate
 from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
-import soundfile as sf
 
-def get_sampling_rate(file_path):
-    with sf.SoundFile(file_path) as audio_file:
-        sampling_rate = audio_file.samplerate
-    return sampling_rate
-
-def read_label( label_path, default_config = {} ):
+def read_label( label_path, default_config = {}, ignore_cluster = False ):
     if label_path.endswith(".json"):
         label = json.load( open(label_path) )
     elif label_path.endswith(".csv"):
@@ -25,12 +19,19 @@ def read_label( label_path, default_config = {} ):
         assert False, "Unsupported file format!"
     assert "onset" in label and "offset" in label
     if "cluster" not in label:
-        label["cluster"] = ["0"] * len( label["onset"] )
+        label["cluster"] = ["Vocal"] * len( label["onset"] )
     label["cluster"] = list(map(str, label["cluster"]))
 
     for k in default_config:
         if k not in label:
             label[k] = default_config[k]
+
+    ## always ignore speices, since it is not actually used
+    label["species"] = "unknown"
+    
+    if ignore_cluster:
+        label["cluster"] = [ "Vocal" ] * len( label["cluster"] )
+            
     return label
 
 def get_audio_and_label_paths( folder ):
@@ -47,13 +48,27 @@ def get_audio_and_label_paths( folder ):
     
     return audio_paths, label_paths
 
-def determine_default_config(audio_paths, label_paths, total_spec_columns):
+def determine_default_config(audio_paths, label_paths, total_spec_columns, ignore_cluster ):
+    sr_list = []
+    for audio_fname in audio_paths:
+        sr_list.append( get_sampling_rate( audio_fname ) )
+    assert len(sr_list) > 0, "No valid audios were provided."
+    sr = int(np.median(sr_list))
+    n_fft = get_n_fft_given_sr( sr )
+    time_delta = n_fft / 2 / sr
+    
     onsets = []
     offsets = []
-    for label_path in label_paths:
-        label = read_label(label_path)
-        onsets += label["onset"]
-        offsets += label["offset"]
+    for audio_fname, label_path in zip( audio_paths, label_paths ):
+        label = read_label(label_path, ignore_cluster = ignore_cluster)
+        audio_dur = get_audio_duration( audio_fname )
+
+        ## assume the time stamps in the input csv/json already eliminate the half FFT blurring effect, here we need to add the blurring effect back to cope with the sampling rate used when computing the spectrogram
+        corrected_onsets = [ max(0, t - time_delta) for t in label["onset"] ]
+        corrected_offsets = [ min(audio_dur, t + time_delta ) for t in label["offset"] ]
+        
+        onsets += corrected_onsets
+        offsets += corrected_offsets
     onsets = np.array(onsets)
     offsets = np.array(offsets)
     assert len(onsets) > 0, "No vocal segment is annotated in the label files."
@@ -62,11 +77,7 @@ def determine_default_config(audio_paths, label_paths, total_spec_columns):
     spec_time_step = np.ceil(seg_dur_median * scale_factor / 0.5) * 0.5  / total_spec_columns
     min_frequency = 0
     species = "unkown"
-    sr_list = []
-    for audio_fname in audio_paths:
-        sr_list.append( get_sampling_rate( audio_fname ) )
-    assert len(sr_list) > 0, "No valid audios were provided."
-    sr = int(np.median(sr_list))
+
     return {
         "species": species,
         "sr":sr,
@@ -74,12 +85,12 @@ def determine_default_config(audio_paths, label_paths, total_spec_columns):
         "spec_time_step":spec_time_step,
     }
 
-def get_cluster_codebook( label_paths, initial_cluster_codebook ):
+def get_cluster_codebook( label_paths, initial_cluster_codebook, ignore_cluster ):
     cluster_codebook = deepcopy( initial_cluster_codebook )
     
     unique_clusters = []
     for label_file in label_paths:
-        label = read_label(label_file)
+        label = read_label(label_file, ignore_cluster = ignore_cluster)
         unique_clusters += [ str(cluster) for cluster in label["cluster"]   ]
             
     unique_clusters = sorted(list(set(unique_clusters)))
@@ -89,20 +100,29 @@ def get_cluster_codebook( label_paths, initial_cluster_codebook ):
             cluster_codebook[cluster] = len(cluster_codebook)
     return cluster_codebook
 
-def load_audio_and_label( audio_path_list, label_path_list, thread_id, audio_dict, label_dict, cluster_codebook, default_config = {} ):
+def load_audio_and_label( audio_path_list, label_path_list, thread_id, audio_dict, label_dict, cluster_codebook, default_config = {}, ignore_cluster = False ):
     local_audio_list = []
     local_label_list = []
     
     for count, (audio_path, label_path) in enumerate(zip( audio_path_list, label_path_list )):
-        label = read_label(label_path, default_config) 
+        label = read_label(label_path, default_config, ignore_cluster = ignore_cluster) 
         y, _ = librosa.load( audio_path, sr = label["sr"] )
                 
         local_audio_list.append( y )
 
-        onset_arr = np.array( label["onset"] )
-        offset_arr = np.array( label["offset"] )
+        n_fft = get_n_fft_given_sr( label["sr"] )
+        time_delta = n_fft / 2 / label["sr"]
+        audio_dur = len(y) / label["sr"]
+        
+        ## correct the onset and offset by bring back the fft blurring effect
+        corrected_onsets = [ max(0, t - time_delta ) for t in label["onset"] ]
+        corrected_offsets = [ min(audio_dur, t + time_delta ) for t in label["offset"] ] 
+
+        onset_arr = np.array( corrected_onsets )
+        offset_arr = np.array( corrected_offsets )
+        
         valid_indices = np.logical_and( np.logical_and(  onset_arr < len(y)/label["sr"], offset_arr > 0 ),
-                                        onset_arr < offset_arr )
+                                        onset_arr <= offset_arr )
         onset_arr = onset_arr[valid_indices]
         offset_arr = offset_arr[valid_indices]
         onset_arr[ onset_arr < 0 ] = 0
@@ -128,7 +148,7 @@ def load_audio_and_label( audio_path_list, label_path_list, thread_id, audio_dic
     audio_dict[thread_id] = local_audio_list
     label_dict[thread_id] = local_label_list
     
-def load_data(audio_path_list, label_path_list, cluster_codebook = None, n_threads = 1, default_config = {} ):
+def load_data(audio_path_list, label_path_list, cluster_codebook = None, n_threads = 1, default_config = {}, ignore_cluster = False ):
     samples_per_thread = int(np.ceil( len(audio_path_list) / n_threads ))
     audio_dict = {}
     label_dict = {}
@@ -140,7 +160,8 @@ def load_data(audio_path_list, label_path_list, cluster_codebook = None, n_threa
                                                           thread_id,
                                                           audio_dict, label_dict,
                                                           cluster_codebook,
-                                                          default_config
+                                                          default_config,
+                                                          ignore_cluster
                                                         ) )
         t.start()
         thread_list.append(t)

@@ -15,7 +15,7 @@ from matplotlib.patches import Patch
 import matplotlib.cm as cm
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import DBSCAN
-from audio_utils import WhisperSegFeatureExtractor
+from audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr
 import time
 from PIL import Image
 from scipy.stats import mode
@@ -399,7 +399,7 @@ class SegmenterBase:
                        consolidation_method = "clustering",
                        max_length = 448, 
                        batch_size = 4, 
-                       num_trials = 3,
+                       num_trials = 1,
                        num_beams = 4,
                        top_k = 1, 
                        top_p = 1.0, 
@@ -429,6 +429,24 @@ class SegmenterBase:
                          eps, time_per_frame_for_voting,
                          consolidation_method 
                         )
+
+        ## eliminate the FFT blurring effect
+        n_fft = get_n_fft_given_sr(sr)
+        time_delta = n_fft / 2 / sr
+
+        corrected_onsets = []
+        corrected_offsets = []
+        for onset, offset in zip( final_prediction["onset"], final_prediction["offset"] ):
+            corr_onset = onset + time_delta
+            corr_offset = offset - time_delta
+            if corr_onset > corr_offset:
+                corr_onset = ( onset + offset ) / 2
+                corr_offset = ( onset + offset ) / 2
+            corrected_onsets.append( corr_onset )
+            corrected_offsets.append( corr_offset )
+        
+        final_prediction["onset"] = corrected_onsets
+        final_prediction["offset"] = corrected_offsets
         
         return final_prediction
             

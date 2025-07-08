@@ -177,6 +177,7 @@ def submit_training_request():
         model_name = request.form.get('model_name', type=str, default=None)
         initial_model_name = request.form.get('initial_model_name', type=str, default=None)
         num_epochs = request.form.get('num_epochs', type=int, default=3)
+        ignore_cluster = request.form.get( 'ignore_cluster', type=int, default=0 )
 
         illegal_strings = list(set(re.findall("[^a-zA-Z0-9\-\_\.]+", model_name )))
         if len(illegal_strings) > 0:
@@ -224,6 +225,7 @@ def submit_training_request():
                 "initial_model_name":initial_model_name,
                 "train_dataset_folder":dataset_folder,
                 "num_epochs":num_epochs,
+                "ignore_cluster":ignore_cluster,
                 "status":"queuing"
             })
     except:
@@ -336,6 +338,7 @@ def run_training_script( training_request_queue ):
                             "--train_dataset_folder", training_request_queue[0]["train_dataset_folder"] + "/",
                             "--model_folder", model_folder,
                             "--max_num_epochs", str( training_request_queue[0]["num_epochs"] ),
+                            "--ignore_cluster", str( training_request_queue[0]["ignore_cluster"] )
                         ]
                 subprocess.run( process_args )                
                 

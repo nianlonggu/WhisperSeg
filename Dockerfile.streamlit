@@ -1,0 +1,14 @@
+FROM python:3.10-slim
+
+# Ensure Python output is unbuffered for Docker logging
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=utf-8
+
+WORKDIR /app
+
+COPY requirements-streamlit.txt .
+RUN pip install -r requirements-streamlit.txt
+
+COPY . .
+
+CMD streamlit run scripts/service.py --server.address 0.0.0.0 --server.port 8081  --server.maxUploadSize 2000 -- --backend_service ${WHISPERSEG_SERVICE} 

@@ -69,35 +69,6 @@ def convert_df_to_datagrid_format(df):
             row['id'] = i + 1
     return {'columns': columns, 'rows': rows}
 
-def start_backend_service( flask_port, dataset_base_folder, model_base_folder ):
-    subprocess.run( [ "python", os.path.join( script_dirname, "backend.py" ),
-                      "--flask_port", str( flask_port ),
-                      "--dataset_base_folder", str(dataset_base_folder), 
-                      "--model_base_folder", str(model_base_folder)
-                    ] )
-
-@st.cache_resource
-def init( flask_port, dataset_base_folder, model_base_folder ):
-
-    try:
-        t = threading.Thread( target = start_backend_service, 
-                          args = ( flask_port, dataset_base_folder, model_base_folder ),
-                          daemon = True
-                        )
-        t.start()
-        print(datetime.now(), "backend service started!")
-    except:
-        print("Warning: backend start failed!")
-    
-    ## wait until the backend service is ready 
-    while True:
-        try:
-            status = requests.get(f"http://localhost:{flask_port}/status" ).json()
-            print("backend is running ...")
-            break
-        except:
-            time.sleep(1)
-
 
 # Function to read the GIF file and encode it in base64
 def get_gif_base64(path):
@@ -162,17 +133,17 @@ def init_varaiables():
     if "segmentation_df" not in st.session_state:
         st.session_state["segmentation_df"] = None
     
-def list_models_available_for_finetuning(flask_port):
-    return requests.post(f"http://localhost:{flask_port}/list-models-available-for-finetuning" ).json()["response"]
+def list_models_available_for_finetuning(backend_service):
+    return requests.post(f"{backend_service}/list-models-available-for-finetuning" ).json()["response"]
 
-def list_models_available_for_inference(flask_port):
-    return requests.post(f"http://localhost:{flask_port}/list-models-available-for-inference" ).json()["response"]
+def list_models_available_for_inference(backend_service):
+    return requests.post(f"{backend_service}/list-models-available-for-inference" ).json()["response"]
 
-def list_models_being_trained(flask_port):
-    return requests.post(f"http://localhost:{flask_port}/list-models-training-in-progress" ).json()["response"]
+def list_models_being_trained(backend_service):
+    return requests.post(f"{backend_service}/list-models-training-in-progress" ).json()["response"]
 
-def list_all_models(flask_port):
-    return requests.post(f"http://localhost:{flask_port}/list-all-models" ).json()["response"]
+def list_all_models(backend_service):
+    return requests.post(f"{backend_service}/list-all-models" ).json()["response"]
 
 def segment_audio( url, model_name, audio_path, min_frequency = None, spec_time_step = None, channel_id = 0 ):
     response = requests.post( url, files = { "audio_file": open(audio_path, "rb").read() if isinstance(audio_path, str) else audio_path },
@@ -194,7 +165,7 @@ def submit_training_request( url, model_name, initial_model_name, uploaded_files
     return response.json()
 
 # Function to handle segmentation 
-def handle_segmentation( flask_port, model_name, uploaded_files ):
+def handle_segmentation( backend_service, model_name, uploaded_files ):
     status_reporter = st.empty()
     
     if st.session_state["running_segmentation"]:
@@ -209,7 +180,7 @@ def handle_segmentation( flask_port, model_name, uploaded_files ):
                 audio_fname = uploaded_file.name
                 st.session_state["segmentation_status"] = "Segmenting %s... (%d/%d)"%( audio_fname, count + 1, len(uploaded_files) )
                 status_reporter.write( st.session_state["segmentation_status"] )
-                prediction = segment_audio( f"http://localhost:{flask_port}/segment", 
+                prediction = segment_audio( f"{backend_service}/segment", 
                                             model_name,
                                             uploaded_file,
                                             min_frequency = st.session_state["min_frequency"],
@@ -277,9 +248,9 @@ def handle_segmentation( flask_port, model_name, uploaded_files ):
 
     
 # Function to handle fine-tuning
-def handle_fine_tuning(flask_port, model_name, initial_model_name, uploaded_files):
+def handle_fine_tuning(backend_service, model_name, initial_model_name, uploaded_files):
     status_reporter = st.empty()
-    model_list = [ item["model_name"] for item in list_all_models( flask_port )]
+    model_list = [ item["model_name"] for item in list_all_models( backend_service )]
     model_name =  model_name.lower().strip()
     if model_name == "":
         status_reporter.write("Error: The model name cannot be empty.")
@@ -290,15 +261,15 @@ def handle_fine_tuning(flask_port, model_name, initial_model_name, uploaded_file
         if len(illegal_strings) > 0:
             status_reporter.write("Error: '%s' not allowed in model name"%( " ".join( illegal_strings ) ))
         else:
-            response = submit_training_request( f"http://localhost:{flask_port}/submit-training-request", model_name, initial_model_name, uploaded_files )
+            response = submit_training_request( f"{backend_service}/submit-training-request", model_name, initial_model_name, uploaded_files )
             status_reporter.write( json.dumps( response ) )
     
-def display_segmentation_tab(flask_port):
+def display_segmentation_tab(backend_service):
     st.header("Segment")
     ## This is a hacky way to refresh the file uploader
     uploaded_files = st.file_uploader("Upload Audio Files" + " "*st.session_state["refresh_segmentation_tab"],  accept_multiple_files=True, type=["wav"])
     
-    model_list = [ item["model_name"] for item in list_models_available_for_inference( flask_port )]
+    model_list = [ item["model_name"] for item in list_models_available_for_inference( backend_service )]
     model_name = st.selectbox("Choose WhisperSeg Model", model_list)
 
     cols = st.columns(3)
@@ -320,17 +291,17 @@ def display_segmentation_tab(flask_port):
                 st.session_state["segmentation_status"] = ""
                 st.session_state["segmentation_df"] = None 
                 st.rerun()
-    handle_segmentation(flask_port, model_name, uploaded_files )
+    handle_segmentation(backend_service, model_name, uploaded_files )
 
     ## this is important to refresh the widgets
     for _ in range(10):
         st.empty()  
         
-def display_finetuning_tab(flask_port):
+def display_finetuning_tab(backend_service):
     st.header("Finetune")
     uploaded_files = st.file_uploader("Upload Training Dataset (Paired audio file and annotation csv/json, e.g., exp1_sound1.wav, exp1_sound1.csv, exp1_sound2.wav, exp1_sound2.csv ... For detailed data strcuture please refer to https://github.com/nianlonggu/WhisperSeg/blob/master/docs/DatasetProcessing.md)" + " "*st.session_state["refresh_finetuning_tab"], accept_multiple_files=True, type=["wav", "csv","json"], key="finetune_audio")
     
-    model_list = [ item["model_name"] for item in list_models_available_for_finetuning( flask_port )]
+    model_list = [ item["model_name"] for item in list_models_available_for_finetuning( backend_service )]
     initial_model_name = st.selectbox("Select the model to use as the starting point for training", model_list, key="finetune_model")
     model_name = st.text_input("Name your new fine-tuned model using letters, numbers, or '-'. Avoid special characters like /\\?|}!. Ensure the name is unique and not used by existing models.")
 
@@ -345,16 +316,16 @@ def display_finetuning_tab(flask_port):
                 st.rerun()
     if st.session_state["running_finetuning"]:
         st.session_state["running_finetuning"] = 0
-        handle_fine_tuning(flask_port, model_name, initial_model_name, uploaded_files)
+        handle_fine_tuning(backend_service, model_name, initial_model_name, uploaded_files)
     for _ in range(5):
         st.empty()
 
 def send_rerun_signal():
     st.session_state["rerun_now"] = True
 
-def display_model_list_tab(flask_port):
+def display_model_list_tab(backend_service):
     st.header("Model List")
-    st.session_state["all_model_list"] = list_all_models(flask_port)
+    st.session_state["all_model_list"] = list_all_models(backend_service)
         
     with elements("model-list"):
         # mui.Button("Refresh", variant = "text", onClick=lambda x:send_rerun_signal)
@@ -389,9 +360,7 @@ def display_model_list_tab(flask_port):
                         
 def main():
     parser = argparse.ArgumentParser(description='App external parameters')
-    parser.add_argument("--backend_flask_port", help="The port of the backend flask app.", default=8060, type=int)
-    parser.add_argument("--backend_dataset_base_folder", help="The folder that stores the uploaded dataset.", type=str, default = None)
-    parser.add_argument("--backend_model_base_folder", help="The folder that stores the finetuned models.", type=str, default = None)
+    parser.add_argument("--backend_service", help="The address of the backend service." )
     try:
         args = parser.parse_args()
     except SystemExit as e:
@@ -400,7 +369,6 @@ def main():
         # so we have to do a hard exit.
         os._exit(e.code)
     
-    init( args.backend_flask_port, args.backend_dataset_base_folder, args.backend_model_base_folder )
     init_varaiables()
     remove_streamlit_style()
     
@@ -411,11 +379,11 @@ def main():
     tabs = st.tabs(tab_names)
 
     with tabs[0]:
-        display_segmentation_tab(args.backend_flask_port)
+        display_segmentation_tab(args.backend_service)
     with tabs[1]:
-        display_finetuning_tab(args.backend_flask_port)
+        display_finetuning_tab(args.backend_service)
     with tabs[2]:
-        display_model_list_tab(args.backend_flask_port)
+        display_model_list_tab(args.backend_service)
 
     time.sleep(5)
     st.rerun()

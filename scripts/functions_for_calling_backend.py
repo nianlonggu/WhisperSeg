@@ -11,13 +11,14 @@ def create_zip_in_memory_given_folder(folder):
     memory_file.seek(0)  # Reset file pointer to the beginning
     return memory_file
 
-def train( server_address, folder, model_name, initial_model_name, num_epochs = 3 ):
+def train( server_address, folder, model_name, initial_model_name, num_epochs = 3, ignore_cluster = 0 ):
     response = requests.post( 
          server_address + "/submit-training-request",
          files= {'zip': create_zip_in_memory_given_folder( folder ) }, 
          data = { "model_name":model_name,
               "initial_model_name":initial_model_name,
-              "num_epochs":num_epochs
+              "num_epochs":num_epochs,
+              "ignore_cluster":ignore_cluster
             }
     )
     return response.json()

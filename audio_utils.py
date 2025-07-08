@@ -13,7 +13,34 @@ import re
 import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
 import matplotlib.cm as cm
+from mutagen import File
+import soundfile as sf
 
+def get_sampling_rate(file_path):
+    with sf.SoundFile(file_path) as audio_file:
+        sampling_rate = audio_file.samplerate
+    return sampling_rate
+
+def get_audio_duration( audio_file_path ):
+    try:
+        audio_file = File( audio_file_path )
+        return audio_file.info.length
+    except:
+        audio, sr = librosa.load( audio_file_path, sr = None )
+        return len(audio) / sr
+
+def get_n_fft_given_sr( sr ):
+    if sr <= 32000:
+        n_fft = 512
+    elif sr <= 80000:
+        n_fft = 1024
+    elif sr <= 150000:
+        n_fft = 2048
+    elif sr <= 300000:
+        n_fft = 4096
+    else:
+        n_fft = 8192
+    return n_fft
 
 class WhisperSegFeatureExtractor( WhisperFeatureExtractor ):
     def __init__(self, sr, spec_time_step, min_frequency = None, max_frequency = None, chunk_length = 30 ):
@@ -21,17 +48,8 @@ class WhisperSegFeatureExtractor( WhisperFeatureExtractor ):
         hop_length = int( spec_time_step * sr )
         # if hop_length != spec_time_step * sr:
         #     print("Warning: spec_time_step * sr must be an integer. Consider changing the sampling rate sr.")
-        
-        if sr <= 32000:
-            n_fft = 512
-        elif sr <= 80000:
-            n_fft = 1024
-        elif sr <= 150000:
-            n_fft = 2048
-        elif sr <= 300000:
-            n_fft = 4096
-        else:
-            n_fft = 8192
+
+        n_fft = get_n_fft_given_sr( sr )
             
         if min_frequency is None:
             min_frequency = 0
