@@ -447,6 +447,19 @@ class SegmenterBase:
         
         final_prediction["onset"] = corrected_onsets
         final_prediction["offset"] = corrected_offsets
+
+        ## remove the duplicated segments (onset offset are the same and cluster name is also the same)
+        if len(final_prediction["onset"]) > 0:
+            clean_onset_list, clean_offset_list, clean_cluster_list = [], [], []
+            for onset, offset, cluster in sorted(zip(final_prediction["onset"], final_prediction["offset"], final_prediction["cluster"]), key = lambda x: x[0]):
+                if len(clean_onset_list) == 0 or onset != clean_onset_list[-1] or offset != clean_offset_list[-1] or cluster != clean_cluster_list[-1]:
+                    clean_onset_list.append(onset)
+                    clean_offset_list.append(offset)
+                    clean_cluster_list.append(cluster)
+                    
+            final_prediction["onset"] = clean_onset_list
+            final_prediction["offset"] = clean_offset_list
+            final_prediction["cluster"] = clean_cluster_list
         
         return final_prediction
             
