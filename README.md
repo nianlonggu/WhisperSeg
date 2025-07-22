@@ -17,6 +17,15 @@ conda install conda-forge::cudnn==8.9.7.29 -y
 ## suppose CUDA version is 12.1, for other version, please refer to https://pytorch.org/get-started/locally/
 pip install --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
+### Troubleshoot
+* If you encountered error when using WhisperSeg, like: `Could not load library libcudnn_ops_infer.so.8`, please make sure you have install cudnn 8 following the command above. If the error still exists, it can be used by the conflict between pyenv and conda python, please try the following to set conda python with a higher priority than pyenv:
+  ```bash
+  # Check pyenv global version
+  pyenv global
+  # Set pyenv to use system/conda when in conda env
+  pyenv global system
+  ```
+Then start a new terminal and activate conda environment
 
 **NOTE for Windows OS:** For method 1 and 2, if running WhisperSeg on windows, one need to further uninstall 'bitsandbytes' by 
 ```bash
