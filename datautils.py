@@ -6,8 +6,15 @@ import threading
 from torch.utils.data import Dataset, DataLoader
 from copy import deepcopy
 import json
-from audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr, get_audio_duration, get_sampling_rate
-from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+try:
+    from audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr, get_audio_duration, get_sampling_rate
+except:
+    from .audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr, get_audio_duration, get_sampling_rate
+
+try:
+    from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+except:
+    from .utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
 
 def read_label( label_path, default_config = {}, ignore_cluster = False ):
     if label_path.endswith(".json"):

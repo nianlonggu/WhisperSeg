@@ -15,13 +15,19 @@ from matplotlib.patches import Patch
 import matplotlib.cm as cm
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import DBSCAN
-from audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr
+try:
+    from audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr
+except:
+    from .audio_utils import WhisperSegFeatureExtractor, get_n_fft_given_sr
 import time
 from PIL import Image
 from scipy.stats import mode
 
-from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
-
+try:
+    from utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+except:
+    from .utils import RATIO_DECODING_TIME_STEP_TO_SPEC_TIME_STEP
+    
 from huggingface_hub import snapshot_download
 import hashlib
 import os
