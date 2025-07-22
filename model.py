@@ -111,7 +111,7 @@ def load_model( initial_model_path, total_spec_columns, dropout = 0.0):
         
 class SegmenterBase:
     def __init__( self,  ):
-        self.segment_matcher = re.compile("<\|([0-9]+)\|>(\d+?)<\|([0-9]+)\|>")
+        self.segment_matcher = re.compile(r"<\|([0-9]+)\|>(\d+?)<\|([0-9]+)\|>")
         self.total_spec_columns = None
         self.precision_bits = 3
         self.cluster_codebook = None
