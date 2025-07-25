@@ -24,3 +24,4 @@ streamlit-autorefresh
 gputil
 chardet
 mutagen
+pyarrow==18.0.0
